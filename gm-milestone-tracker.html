@@ -125,10 +125,11 @@
 
   /* ===== CAR ===== */
   /*
-    Track usable area: ~12% to ~88% of screen = 76% of screen width
-    Scale: 500K maps to 76% of screen
-    GM:     378K / 500K = 75.6% → 12% + (75.6% × 76%) = 12% + 57.5% = ~69.5% → use 68%
-    KDDI:   20.1K / 500K = 4.02% → 12% + (4.02% × 76%) = 12% + 3.1% = ~15.1% → use 15%
+    Track: 12% (start) to 88% (500K) = 76% wide
+    GM:     378K/500K = 75.6% → 12% + 57.5% = ~69%
+    KDDI:   20.1K/500K = 4.02% → 12% + 3.1% = ~15% proportional
+            But "We Are Here" sign is at 46% (just right of 2025 sign at 42%)
+            Move KDDI car to ~44% to be near the 20.1K sign
     Cherry: ~0K → stays near 12%
   */
   .car-wrapper {
@@ -139,8 +140,9 @@
   .anim-kddi  { animation: carKddi  5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
   .anim-cherry{ animation: carCherry 5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
 
+  /* GM stops at 69%, KDDI stops at 43% (just left of the 20.1K sign at 46%), Cherry stays near start */
   @keyframes carGm     { 0%{left:12%} 85%{left:70%} 92%{left:68.5%} 100%{left:69%} }
-  @keyframes carKddi   { 0%{left:12%} 85%{left:16%} 92%{left:14.5%} 100%{left:15%} }
+  @keyframes carKddi   { 0%{left:12%} 85%{left:44%} 92%{left:42.5%} 100%{left:43%} }
   @keyframes carCherry { 0%{left:12%} 85%{left:13%} 92%{left:12.2%} 100%{left:12.5%} }
 
   .car-svg {
@@ -192,21 +194,21 @@
   }
 
   /*
-    Milestone positions scaled proportionally:
-    Track: 12% to 88% = 76% wide
-    2023 (0K):   12% (start)
-    2024 (GM:25K, KDDI:0K): 12% + (25/500 × 76%) = 12% + 3.8% = ~16% → use 16%
-    2025 (GM:198K, KDDI:12K): 12% + (198/500 × 76%) = 12% + 30.1% = ~42% → use 42%
-    GM current (378K): 12% + (378/500 × 76%) = 12% + 57.5% = ~70% → use 70%
-    KDDI current (20.1K): 12% + (20.1/500 × 76%) = 12% + 3.1% = ~15% → use 16%
-    Cherry current (0K): ~12%
+    Milestone positions:
+    Track: 12% (0K) to 88% (500K) = 76% wide
+    2023 (0K):   12%
+    2024 (25K):  12% + (25/500 × 76%) = ~15.8% → 16%
+    2025 (198K for GM, 12K for KDDI): 12% + (198/500 × 76%) = ~42%
+    GM current (378K): 12% + (378/500 × 76%) = ~69%
+    KDDI current (20.1K): placed at 46% — just right of 2025 sign at 42%
+    Cherry current (0K): ~13%
     500K: 88%
   */
   .ms-start  { left: 12%; }
   .ms-2024   { left: 16%; }
   .ms-2025   { left: 42%; }
-  .ms-current-gm    { left: 70%; }
-  .ms-current-kddi  { left: 18%; }
+  .ms-current-gm    { left: 69%; }
+  .ms-current-kddi  { left: 46%; }
   .ms-current-cherry{ left: 13%; }
   .ms-500k { left: 88%; }
 
@@ -540,7 +542,7 @@
 
     <div class="tree" style="left:55%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
 
-    <!-- Car KDDI -->
+    <!-- Car KDDI — animates to ~43%, just left of the 20.1K sign at 46% -->
     <div class="car-wrapper anim-kddi" id="carKddi" style="position:absolute;">
       <div style="position:relative;">
         <div class="driver-bubble">
@@ -579,7 +581,7 @@
       <div class="milestone-sign">📅 2025<br><span>12K</span></div>
       <div class="milestone-pole"></div>
     </div>
-    <!-- KDDI current: 20.1K — just right of 2025 sign (which is at 42%), car at ~15% -->
+    <!-- KDDI current: 20.1K — placed at 46%, just right of 2025 sign at 42% -->
     <div class="milestone ms-current-kddi">
       <div class="milestone-sign">📍 20.1K — We Are Here!<span class="milestone-sub">Apr 2026</span></div>
       <div class="milestone-pole"></div>
