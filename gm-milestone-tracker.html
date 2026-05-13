@@ -4,1109 +4,816 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GM Milestone Tracker</title>
+<title>Vehicle Base Milestone Race</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     background: #1a1a2e;
+    font-family: 'Arial', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ===== LEADERBOARD ===== */
+  .leaderboard {
+    background: linear-gradient(135deg, #4B286D, #2A2C2E);
+    padding: 10px 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Arial', sans-serif;
-    overflow: hidden;
+    justify-content: space-between;
+    border-bottom: 3px solid #00A400;
+    z-index: 50;
+    position: relative;
   }
+  .leaderboard h2 {
+    color: #f0c040;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(240,192,64,0.5);
+  }
+  .lb-entries { display: flex; gap: 16px; }
+  .lb-entry {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.08);
+    padding: 5px 12px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .lb-rank { font-size: 16px; font-weight: 900; }
+  .lb-name { color: white; font-weight: bold; font-size: 13px; }
+  .lb-num  { font-weight: 900; font-size: 14px; }
+  .lb-entry.rank1 { border-color: #f0c040; background: rgba(240,192,64,0.15); }
+  .lb-entry.rank2 { border-color: #aaa;    background: rgba(170,170,170,0.1); }
+  .lb-entry.rank3 { border-color: #cd7f32; background: rgba(205,127,50,0.1); }
 
-  .slide-container {
+  /* ===== RACE LANES ===== */
+  .race-container { display: flex; flex-direction: column; }
+
+  .race-lane {
     width: 100vw;
-    height: 100vh;
-    background: linear-gradient(180deg, #87CEEB 0%, #b0e0f5 42%, #7ec850 42%, #5a9e35 100%);
+    height: calc((100vh - 56px) / 3);
     position: relative;
     overflow: hidden;
   }
 
-  /* Clouds */
-  .cloud {
-    position: absolute;
-    background: white;
-    border-radius: 50px;
-    opacity: 0.85;
-  }
-  .cloud::before, .cloud::after {
-    content: '';
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-  }
-  .cloud1 { width: 120px; height: 40px; top: 8%; left: -140px; animation: cloudLoop 60s linear infinite; }
-  .cloud1::before { width: 60px; height: 60px; top: -30px; left: 15px; }
-  .cloud1::after  { width: 45px; height: 45px; top: -20px; left: 50px; }
-  .cloud2 { width: 90px; height: 30px; top: 18%; left: -110px; animation: cloudLoop 80s linear infinite 20s; }
-  .cloud2::before { width: 45px; height: 45px; top: -22px; left: 10px; }
-  .cloud2::after  { width: 35px; height: 35px; top: -15px; left: 40px; }
-  .cloud3 { width: 100px; height: 35px; top: 6%; left: -120px; animation: cloudLoop 70s linear infinite 40s; }
-  .cloud3::before { width: 50px; height: 50px; top: -25px; left: 12px; }
-  .cloud3::after  { width: 40px; height: 40px; top: -18px; left: 45px; }
-  .cloud4 { width: 80px; height: 28px; top: 14%; left: -100px; animation: cloudLoop 90s linear infinite 10s; }
-  .cloud4::before { width: 40px; height: 40px; top: -20px; left: 8px; }
-  .cloud4::after  { width: 30px; height: 30px; top: -14px; left: 35px; }
+  .lane-gm    { background: linear-gradient(180deg, #87CEEB 0%, #b0e0f5 42%, #7ec850 42%, #5a9e35 100%); }
+  .lane-kddi  { background: linear-gradient(180deg, #b8d4f0 0%, #d0e8f8 42%, #8ed46a 42%, #6ab040 100%); }
+  .lane-cherry{ background: linear-gradient(180deg, #c8e8f8 0%, #dff0fc 42%, #9adc76 42%, #72b84a 100%); }
 
-  @keyframes cloudLoop {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(110vw); }
+  .lane-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #4B286D, #00A400, #4B286D);
+    opacity: 0.6;
   }
 
-  /* Road */
+  /* Company badge */
+  .company-badge {
+    position: absolute; top: 6px; left: 8px;
+    padding: 3px 10px; border-radius: 12px;
+    font-weight: 900; font-size: 12px;
+    z-index: 20; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .badge-gm    { background: #00A400; color: white; }
+  .badge-kddi  { background: #1a6bcc; color: white; }
+  .badge-cherry{ background: #cc1a1a; color: white; }
+
+  /* ===== ROAD ===== */
   .road {
-    position: absolute;
-    bottom: 22%; left: 0;
-    width: 100%; height: 80px;
-    background: #2A2C2E;
-    z-index: 2;
+    position: absolute; bottom: 22%; left: 0;
+    width: 100%; height: 52px;
+    background: #2A2C2E; z-index: 2;
   }
   .road-line {
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    width: 100%; height: 6px;
-    background: repeating-linear-gradient(90deg, #f0c040 0px, #f0c040 60px, transparent 60px, transparent 120px);
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 100%; height: 4px;
+    background: repeating-linear-gradient(90deg, #f0c040 0px, #f0c040 40px, transparent 40px, transparent 80px);
   }
 
-  /* Warehouse */
+  /* ===== WAREHOUSE ===== */
   .warehouse {
-    position: absolute;
-    bottom: calc(22% + 80px);
-    left: 20px; width: 160px;
-    z-index: 3;
+    position: absolute; bottom: calc(22% + 52px);
+    left: 10px; width: 95px; z-index: 3;
   }
   .warehouse-building {
-    width: 160px; height: 100px;
-    background: #4B286D;
-    border-radius: 4px 4px 0 0;
-    position: relative;
+    width: 95px; height: 62px;
+    border-radius: 3px 3px 0 0; position: relative;
   }
+  .wh-gm    { background: #4B286D; }
+  .wh-kddi  { background: #1a6bcc; }
+  .wh-cherry{ background: #cc1a1a; }
   .warehouse-roof {
     width: 0; height: 0;
-    border-left: 80px solid transparent;
-    border-right: 80px solid transparent;
-    border-bottom: 30px solid #3a1d54;
-    position: absolute;
-    top: -30px; left: 0;
+    border-left: 47px solid transparent;
+    border-right: 47px solid transparent;
+    position: absolute; top: -17px; left: 0;
   }
+  .roof-gm    { border-bottom: 17px solid #3a1d54; }
+  .roof-kddi  { border-bottom: 17px solid #0d4a99; }
+  .roof-cherry{ border-bottom: 17px solid #991111; }
   .warehouse-door {
-    width: 50px; height: 55px;
-    background: #1a0a2e;
-    position: absolute;
-    bottom: 0; left: 55px;
-    border-radius: 3px 3px 0 0;
+    width: 26px; height: 32px; background: #1a0a2e;
+    position: absolute; bottom: 0; left: 34px;
+    border-radius: 2px 2px 0 0;
   }
-  .warehouse-window {
-    width: 30px; height: 25px;
-    background: #87CEEB;
-    border: 2px solid #3a1d54;
-    position: absolute; top: 20px;
-  }
-  .warehouse-window.left  { left: 15px; }
-  .warehouse-window.right { right: 15px; }
   .warehouse-label {
     text-align: center; color: white;
-    font-size: 11px; font-weight: bold;
-    background: #2A2C2E;
-    padding: 3px 6px; border-radius: 3px;
-    margin-top: 4px;
+    font-size: 7px; font-weight: bold;
+    background: #2A2C2E; padding: 2px 4px;
+    border-radius: 2px; margin-top: 2px;
   }
 
-  /* Truck + Trailer */
-  .truck-wrapper {
-    position: absolute;
-    bottom: calc(22% + 80px);
+  /* ===== CAR ===== */
+  /*
+    Track usable area: ~12% to ~88% of screen = 76% of screen width
+    Scale: 500K maps to 76% of screen
+    GM:     378K / 500K = 75.6% → 12% + (75.6% × 76%) = 12% + 57.5% = ~69.5% → use 68%
+    KDDI:   20.1K / 500K = 4.02% → 12% + (4.02% × 76%) = 12% + 3.1% = ~15.1% → use 15%
+    Cherry: ~0K → stays near 12%
+  */
+  .car-wrapper {
+    position: absolute; bottom: calc(22% + 52px);
     z-index: 10;
-    display: flex;
-    align-items: flex-end;
-    animation: truckDrive 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
-  @keyframes truckDrive {
-    0%   { left: 5%; }
-    85%  { left: 43%; }
-    92%  { left: 41.5%; }
-    100% { left: 42%; }
-  }
+  .anim-gm    { animation: carGm    5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+  .anim-kddi  { animation: carKddi  5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+  .anim-cherry{ animation: carCherry 5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
 
-  .trailer {
-    width: 110px; height: 60px;
-    position: relative;
-    margin-right: 4px;
-  }
-  .trailer-body {
-    width: 110px; height: 48px;
-    background: #4B286D;
-    border-radius: 4px 4px 0 0;
-    position: absolute;
-    bottom: 18px; left: 0;
-    border: 2px solid #6b3d9e;
-  }
-  .trailer-hitch {
-    width: 14px; height: 6px;
-    background: #555;
-    position: absolute;
-    right: -14px; bottom: 22px;
-    z-index: 1;
-  }
-  .trailer-wheel {
-    width: 20px; height: 20px;
-    background: #1a1a1a;
-    border-radius: 50%;
-    border: 3px solid #555;
-    position: absolute; bottom: -4px;
-    animation: wheelSpin 0.5s linear infinite;
-  }
-  .trailer-wheel::after {
-    content: '';
-    width: 7px; height: 7px;
-    background: #888; border-radius: 50%;
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .trailer-wheel-left  { left: 12px; }
-  .trailer-wheel-right { right: 12px; }
+  @keyframes carGm     { 0%{left:12%} 85%{left:70%} 92%{left:68.5%} 100%{left:69%} }
+  @keyframes carKddi   { 0%{left:12%} 85%{left:16%} 92%{left:14.5%} 100%{left:15%} }
+  @keyframes carCherry { 0%{left:12%} 85%{left:13%} 92%{left:12.2%} 100%{left:12.5%} }
 
-  .trailer-person-bubble {
-    position: absolute;
-    top: -44px; left: 50%;
-    transform: translateX(-50%);
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    border: 3px solid white;
-    overflow: hidden;
-    background: #b8e0ff;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    z-index: 20;
-  }
-  .trailer-person-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -8px; left: 50%;
-    transform: translateX(-50%);
-    width: 0; height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 8px solid white;
-  }
-  .trailer-person-bubble img {
-    width: 100%; height: 100%;
-    object-fit: cover; border-radius: 50%;
-  }
-
-  .truck {
-    width: 120px; height: 65px;
-    position: relative;
-  }
-  .truck-body {
-    width: 80px; height: 45px;
-    background: #00A400;
-    position: absolute;
-    bottom: 18px; right: 0;
-    border-radius: 4px 4px 0 0;
-  }
-  .truck-cab {
-    width: 50px; height: 38px;
-    background: #008000;
-    position: absolute;
-    bottom: 18px; left: 0;
-    border-radius: 6px 0 0 0;
-    overflow: visible;
-  }
-  .driver-bubble {
-    position: absolute;
-    top: -42px; left: 4px;
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    border: 3px solid white;
-    overflow: hidden;
-    background: #b8e0ff;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    z-index: 20;
-  }
-  .driver-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -8px; left: 50%;
-    transform: translateX(-50%);
-    width: 0; height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 8px solid white;
-  }
-  .driver-bubble img {
-    width: 100%; height: 100%;
-    object-fit: cover; border-radius: 50%;
-  }
-  .truck-cab-window {
-    width: 28px; height: 22px;
-    background: #b8e0ff;
-    position: absolute;
-    top: 4px; left: 6px;
-    border-radius: 4px 0 0 0;
-    border: 2px solid #005500;
-  }
-  .truck-wheel {
-    width: 22px; height: 22px;
-    background: #1a1a1a;
-    border-radius: 50%;
-    border: 3px solid #555;
-    position: absolute; bottom: -4px;
-    animation: wheelSpin 0.5s linear infinite;
-  }
-  .truck-wheel::after {
-    content: '';
-    width: 8px; height: 8px;
-    background: #888; border-radius: 50%;
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .wheel-front { right: 8px; }
-  .wheel-back  { left: 8px; }
-
-  @keyframes wheelSpin {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .truck-logo {
-    position: absolute;
-    top: 8px; right: 10px;
-    color: white; font-size: 10px; font-weight: bold;
-    background: #003399;
-    padding: 2px 5px; border-radius: 3px;
-  }
-
-  .exhaust {
-    position: absolute;
-    bottom: 30px; left: -10px;
-    z-index: 9;
-  }
-  .puff {
-    width: 14px; height: 14px;
-    background: rgba(200,200,200,0.7);
-    border-radius: 50%;
-    position: absolute;
-    animation: puffAway 1s ease-out infinite;
-  }
-  .puff:nth-child(2) { animation-delay: 0.3s; width: 10px; height: 10px; }
-  .puff:nth-child(3) { animation-delay: 0.6s; width: 8px; height: 8px; }
-  @keyframes puffAway {
-    0%   { opacity: 0.8; transform: translateX(0) translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateX(-30px) translateY(-15px) scale(2); }
-  }
-
-  /* ===== MILESTONE MARKERS ===== */
-  .milestone {
-    position: absolute;
-    bottom: calc(22% + 80px);
-    z-index: 5;
-    text-align: center;
-    transform: translateX(-50%);
-  }
-  .milestone-pole {
-    width: 4px; height: 60px;
-    background: #2A2C2E;
-    margin: 0 auto;
-  }
-  .milestone-sign {
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-weight: bold; font-size: 13px;
-    white-space: nowrap;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-  }
-  .milestone-sub {
-    font-size: 10px;
-    font-weight: normal;
-    opacity: 0.85;
-    margin-top: 2px;
+  .car-svg {
+    width: 90px;
+    height: auto;
     display: block;
   }
 
-  /* Year milestones */
-  .milestone-year .milestone-pole {
-    height: 40px;
-    background: #555;
+  .driver-bubble {
+    position: absolute; top: -28px; left: 28px;
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid white; overflow: hidden;
+    background: #b8e0ff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4); z-index: 20;
   }
+  .driver-bubble img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+  .exhaust { position: absolute; bottom: 8px; left: -7px; z-index: 9; }
+  .puff {
+    width: 9px; height: 9px; background: rgba(200,200,200,0.7);
+    border-radius: 50%; position: absolute;
+    animation: puffAway 1s ease-out infinite;
+  }
+  .puff:nth-child(2) { animation-delay: 0.3s; width: 6px; height: 6px; }
+  .puff:nth-child(3) { animation-delay: 0.6s; width: 5px; height: 5px; }
+  @keyframes puffAway {
+    0%  { opacity: 0.8; transform: translateX(0) translateY(0) scale(1); }
+    100%{ opacity: 0; transform: translateX(-18px) translateY(-8px) scale(2); }
+  }
+
+  /* ===== MILESTONES ===== */
+  .milestone {
+    position: absolute; bottom: calc(22% + 52px);
+    z-index: 5; text-align: center; transform: translateX(-50%);
+  }
+  .milestone-pole { width: 3px; height: 38px; background: #2A2C2E; margin: 0 auto; }
+  .milestone-sign {
+    padding: 3px 7px; border-radius: 5px;
+    font-weight: bold; font-size: 10px;
+    white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .milestone-sub { font-size: 8px; font-weight: normal; opacity: 0.85; margin-top: 1px; display: block; }
+
+  .milestone-year .milestone-pole { height: 26px; background: #555; }
   .milestone-year .milestone-sign {
-    background: rgba(42,44,46,0.88);
-    color: white;
-    border: 1.5px solid #888;
-    font-size: 11px;
-    padding: 4px 8px;
+    background: rgba(42,44,46,0.9); color: white;
+    border: 1px solid #888; font-size: 9px; padding: 3px 6px;
   }
 
-  .milestone-2023 { left: 13%; }
-  .milestone-2024 { left: 24%; }
-  .milestone-2025 { left: 35%; }
+  /*
+    Milestone positions scaled proportionally:
+    Track: 12% to 88% = 76% wide
+    2023 (0K):   12% (start)
+    2024 (GM:25K, KDDI:0K): 12% + (25/500 × 76%) = 12% + 3.8% = ~16% → use 16%
+    2025 (GM:198K, KDDI:12K): 12% + (198/500 × 76%) = 12% + 30.1% = ~42% → use 42%
+    GM current (378K): 12% + (378/500 × 76%) = 12% + 57.5% = ~70% → use 70%
+    KDDI current (20.1K): 12% + (20.1/500 × 76%) = 12% + 3.1% = ~15% → use 16%
+    Cherry current (0K): ~12%
+    500K: 88%
+  */
+  .ms-start  { left: 12%; }
+  .ms-2024   { left: 16%; }
+  .ms-2025   { left: 42%; }
+  .ms-current-gm    { left: 70%; }
+  .ms-current-kddi  { left: 18%; }
+  .ms-current-cherry{ left: 13%; }
+  .ms-500k { left: 88%; }
 
-  /* 378K current */
-  .milestone-378 { left: 58%; }
-  .milestone-378 .milestone-sign {
-    background: #4B286D; color: white;
-    border: 2px solid #6b3d9e;
-    font-size: 14px;
+  /* Taller pole for KDDI and Cherry current milestones */
+  .ms-current-kddi .milestone-pole,
+  .ms-current-cherry .milestone-pole {
+    height: 70px;
   }
 
-  /* 500K banner */
-  .milestone-500 { left: 88%; }
-  .milestone-500 .milestone-sign {
+  .ms-current-gm .milestone-sign    { background: #4B286D; color: white; border: 1.5px solid #6b3d9e; font-size: 10px; }
+  .ms-current-kddi .milestone-sign  { background: #1a6bcc; color: white; border: 1.5px solid #4488ee; font-size: 10px; }
+  .ms-current-cherry .milestone-sign{ background: #cc1a1a; color: white; border: 1.5px solid #ee4444; font-size: 10px; }
+  .ms-500k .milestone-sign {
     background: #00A400; color: white;
-    border: 2px solid #00cc00;
-    font-size: 15px;
+    border: 1.5px solid #00cc00; font-size: 11px;
     animation: pulse 1.5s ease-in-out infinite;
   }
   @keyframes pulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 3px 8px rgba(0,164,0,0.4); }
-    50%       { transform: scale(1.08); box-shadow: 0 5px 16px rgba(0,164,0,0.7); }
+    0%,100%{ transform: scale(1); box-shadow: 0 2px 6px rgba(0,164,0,0.4); }
+    50%    { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,164,0,0.7); }
   }
 
-  /* ===== WEATHER ZONES — moved much higher ===== */
-  .weather-zone {
-    position: absolute;
-    z-index: 6;
-    pointer-events: none;
-  }
-
-  /* Dark rain cloud */
-  .rain-cloud {
-    position: absolute;
-    background: #555;
-    border-radius: 50px;
-    opacity: 0.9;
-  }
-  .rain-cloud::before, .rain-cloud::after {
-    content: '';
-    position: absolute;
-    background: #555;
-    border-radius: 50%;
-  }
-
-  /* Rain drops */
-  .rain-drop {
-    position: absolute;
-    width: 2px;
-    background: linear-gradient(to bottom, transparent, #6ab0d4);
-    border-radius: 2px;
-    animation: rainFall 0.8s linear infinite;
-    opacity: 0.7;
-  }
-  @keyframes rainFall {
-    0%   { transform: translateY(-10px); opacity: 0.7; }
-    100% { transform: translateY(40px); opacity: 0; }
-  }
-
-  /* 2023 weather - heavy rain — pushed HIGH into sky */
-  .weather-2023 {
-    left: calc(13% - 50px);
-    bottom: calc(42% + 60px);
-    width: 100px;
-  }
-  .weather-2023 .rain-cloud {
-    width: 90px; height: 28px;
-    top: 0; left: 5px;
-  }
-  .weather-2023 .rain-cloud::before { width: 44px; height: 44px; top: -22px; left: 8px; }
-  .weather-2023 .rain-cloud::after  { width: 36px; height: 36px; top: -18px; left: 38px; }
-
-  /* 2024 weather - moderate rain — pushed HIGH */
-  .weather-2024 {
-    left: calc(24% - 50px);
-    bottom: calc(42% + 60px);
-    width: 100px;
-  }
-  .weather-2024 .rain-cloud {
-    width: 80px; height: 25px;
-    top: 0; left: 10px;
-    background: #666;
-  }
-  .weather-2024 .rain-cloud::before { width: 38px; height: 38px; top: -19px; left: 8px; background: #666; }
-  .weather-2024 .rain-cloud::after  { width: 30px; height: 30px; top: -15px; left: 35px; background: #666; }
-
-  /* 2025 weather - partly sunny — pushed HIGH */
-  .weather-2025 {
-    left: calc(35% - 50px);
-    bottom: calc(42% + 55px);
-    width: 110px;
-  }
-  .partly-cloud {
-    position: absolute;
-    background: #bbb;
-    border-radius: 50px;
-    width: 65px; height: 22px;
-    top: 8px; left: 30px;
-  }
-  .partly-cloud::before {
-    content: '';
-    position: absolute;
-    background: #bbb;
-    border-radius: 50%;
-    width: 32px; height: 32px;
-    top: -16px; left: 6px;
-  }
-  .partly-cloud::after {
-    content: '';
-    position: absolute;
-    background: #bbb;
-    border-radius: 50%;
-    width: 26px; height: 26px;
-    top: -13px; left: 28px;
-  }
-  .small-sun {
-    position: absolute;
-    width: 28px; height: 28px;
-    background: #f0c040;
-    border-radius: 50%;
-    top: 0; left: 2px;
-    box-shadow: 0 0 8px 3px rgba(240,192,64,0.5);
-    animation: sunGlow 2s ease-in-out infinite alternate;
-  }
-  @keyframes sunGlow {
-    0%   { box-shadow: 0 0 8px 3px rgba(240,192,64,0.4); }
-    100% { box-shadow: 0 0 14px 6px rgba(240,192,64,0.7); }
-  }
-
-  /* 2026 weather - bright sun — pushed HIGH */
-  .weather-2026 {
-    left: calc(58% - 30px);
-    bottom: calc(42% + 80px);
-    width: 80px;
-  }
-  .big-sun {
-    position: absolute;
-    width: 44px; height: 44px;
-    background: radial-gradient(circle, #ffe066, #f0c040);
-    border-radius: 50%;
-    top: 0; left: 18px;
-    box-shadow: 0 0 18px 8px rgba(240,192,64,0.6);
-    animation: bigSunGlow 1.8s ease-in-out infinite alternate;
-  }
-  @keyframes bigSunGlow {
-    0%   { box-shadow: 0 0 18px 8px rgba(240,192,64,0.5); transform: scale(1); }
-    100% { box-shadow: 0 0 28px 14px rgba(240,192,64,0.8); transform: scale(1.06); }
-  }
-
-  /* Party zone */
+  /* ===== PARTY ZONE ===== */
   .party-zone {
-    position: absolute;
-    bottom: calc(22% + 80px);
-    left: 74%;
-    width: 260px;
-    z-index: 4;
+    position: absolute; bottom: calc(22% + 52px);
+    left: 74%; width: 200px; z-index: 4;
   }
   .balloon {
-    position: absolute;
-    border-radius: 50%;
+    position: absolute; border-radius: 50%;
     animation: balloonFloat 2s ease-in-out infinite alternate;
   }
   .balloon::after {
-    content: '';
-    position: absolute;
-    bottom: -12px; left: 50%;
-    transform: translateX(-50%);
-    width: 1px; height: 12px;
-    background: #555;
+    content: ''; position: absolute;
+    bottom: -10px; left: 50%; transform: translateX(-50%);
+    width: 1px; height: 10px; background: #555;
   }
-  .b1 { width: 28px; height: 32px; background: #4B286D; left: 10px;  bottom: 10px; animation-delay: 0s; }
-  .b2 { width: 24px; height: 28px; background: #00A400; left: 55px;  bottom: 20px; animation-delay: 0.4s; }
-  .b3 { width: 26px; height: 30px; background: #f0c040; left: 110px; bottom: 12px; animation-delay: 0.8s; }
-  .b4 { width: 22px; height: 26px; background: #e84393; left: 175px; bottom: 18px; animation-delay: 0.2s; }
-  .b5 { width: 25px; height: 29px; background: #00A400; left: 225px; bottom: 10px; animation-delay: 0.6s; }
+  .b1 { width: 20px; height: 24px; background: #4B286D; left: 10px;  bottom: 8px;  animation-delay: 0s; }
+  .b2 { width: 17px; height: 20px; background: #00A400; left: 38px;  bottom: 15px; animation-delay: 0.4s; }
+  .b3 { width: 19px; height: 22px; background: #f0c040; left: 75px;  bottom: 9px;  animation-delay: 0.8s; }
+  .b4 { width: 17px; height: 19px; background: #e84393; left: 120px; bottom: 13px; animation-delay: 0.2s; }
+  .b5 { width: 19px; height: 21px; background: #2288ee; left: 158px; bottom: 8px;  animation-delay: 0.6s; }
   @keyframes balloonFloat {
-    0%   { transform: translateY(0) rotate(-3deg); }
-    100% { transform: translateY(-14px) rotate(3deg); }
+    0%  { transform: translateY(0) rotate(-3deg); }
+    100%{ transform: translateY(-10px) rotate(3deg); }
   }
   .confetti-piece {
-    position: absolute;
-    width: 8px; height: 8px;
-    border-radius: 2px;
-    animation: confettiFall 2.5s ease-in infinite;
+    position: absolute; width: 6px; height: 6px;
+    border-radius: 2px; animation: confettiFall 2.5s ease-in infinite;
   }
   @keyframes confettiFall {
-    0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(120px) rotate(720deg); opacity: 0; }
+    0%  { transform: translateY(-12px) rotate(0deg); opacity: 1; }
+    100%{ transform: translateY(90px) rotate(720deg); opacity: 0; }
   }
   .sparkle {
-    position: absolute;
-    font-size: 18px;
+    position: absolute; font-size: 13px;
     animation: sparkleAnim 1.2s ease-in-out infinite alternate;
   }
   @keyframes sparkleAnim {
-    0%   { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
-    100% { opacity: 1; transform: scale(1.2) rotate(20deg); }
+    0%  { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
+    100%{ opacity: 1; transform: scale(1.2) rotate(20deg); }
   }
 
-  /* Dancing Stick Figures */
+  /* ===== DANCERS ===== */
   .dancer-wrapper {
-    position: absolute;
-    bottom: calc(42% + 20px);
-    z-index: 8;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    position: absolute; z-index: 8;
+    display: flex; flex-direction: column; align-items: center;
   }
-  .dancer-wrapper.dancer1 {
-    left: 80%;
-    animation: danceBounce1 0.55s ease-in-out infinite alternate;
-  }
-  .dancer-wrapper.dancer2 {
-    left: 87%;
-    animation: danceBounce2 0.65s ease-in-out infinite alternate;
-    animation-delay: 0.2s;
-  }
-  @keyframes danceBounce1 {
-    0%   { transform: translateY(0) rotate(-5deg); }
-    100% { transform: translateY(-12px) rotate(5deg); }
-  }
-  @keyframes danceBounce2 {
-    0%   { transform: translateY(-6px) rotate(4deg); }
-    100% { transform: translateY(6px) rotate(-4deg); }
-  }
+  .dancer1 { animation: danceBounce1 0.55s ease-in-out infinite alternate; }
+  .dancer2 { animation: danceBounce2 0.65s ease-in-out infinite alternate; animation-delay: 0.2s; }
+  @keyframes danceBounce1 { 0%{transform:translateY(0) rotate(-5deg)} 100%{transform:translateY(-9px) rotate(5deg)} }
+  @keyframes danceBounce2 { 0%{transform:translateY(-4px) rotate(4deg)} 100%{transform:translateY(4px) rotate(-4deg)} }
+
   .dancer-head {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: 3px solid white;
-    overflow: hidden;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid white; overflow: hidden;
     background: #b8e0ff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: 2px;
-    flex-shrink: 0;
+    margin-bottom: 2px; flex-shrink: 0;
   }
-  .dancer-head img {
-    width: 100%; height: 100%;
-    object-fit: cover; border-radius: 50%;
-  }
-  .stick-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-  }
-  .stick-torso {
-    width: 3px; height: 32px;
-    background: #2A2C2E;
-    border-radius: 2px;
-  }
+  .dancer-head img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .stick-body { display: flex; flex-direction: column; align-items: center; position: relative; }
+  .stick-torso { width: 2px; height: 20px; background: #2A2C2E; border-radius: 2px; }
   .stick-arms {
-    position: absolute;
-    top: 4px;
-    width: 60px; height: 3px;
+    position: absolute; top: 3px; width: 42px; height: 2px;
     left: 50%; transform: translateX(-50%);
   }
   .dancer1 .stick-arms { animation: armWave1 0.55s ease-in-out infinite alternate; }
   .dancer2 .stick-arms { animation: armWave2 0.65s ease-in-out infinite alternate; animation-delay: 0.15s; }
-  @keyframes armWave1 {
-    0%   { transform: translateX(-50%) rotate(-40deg); }
-    100% { transform: translateX(-50%) rotate(40deg); }
-  }
-  @keyframes armWave2 {
-    0%   { transform: translateX(-50%) rotate(35deg); }
-    100% { transform: translateX(-50%) rotate(-35deg); }
-  }
-  .stick-arm-left {
-    position: absolute; left: 0; top: 0;
-    width: 27px; height: 3px;
-    background: #2A2C2E; border-radius: 2px;
-    transform-origin: right center;
-  }
-  .stick-arm-right {
-    position: absolute; right: 0; top: 0;
-    width: 27px; height: 3px;
-    background: #2A2C2E; border-radius: 2px;
-    transform-origin: left center;
-  }
-  .stick-legs {
-    position: relative;
-    width: 44px; height: 34px;
-  }
-  .stick-leg-left {
-    position: absolute; left: 9px; top: 0;
-    width: 3px; height: 32px;
-    background: #2A2C2E; border-radius: 2px;
-    transform-origin: top center;
-  }
-  .stick-leg-right {
-    position: absolute; right: 9px; top: 0;
-    width: 3px; height: 32px;
-    background: #2A2C2E; border-radius: 2px;
-    transform-origin: top center;
-  }
-  .dancer1 .stick-leg-left  { animation: legLeft1  0.55s ease-in-out infinite alternate; }
-  .dancer1 .stick-leg-right { animation: legRight1 0.55s ease-in-out infinite alternate; }
-  .dancer2 .stick-leg-left  { animation: legLeft2  0.65s ease-in-out infinite alternate; animation-delay: 0.1s; }
-  .dancer2 .stick-leg-right { animation: legRight2 0.65s ease-in-out infinite alternate; animation-delay: 0.1s; }
-  @keyframes legLeft1  { 0% { transform: rotate(-30deg); } 100% { transform: rotate(30deg); } }
-  @keyframes legRight1 { 0% { transform: rotate(30deg);  } 100% { transform: rotate(-30deg); } }
-  @keyframes legLeft2  { 0% { transform: rotate(28deg);  } 100% { transform: rotate(-28deg); } }
-  @keyframes legRight2 { 0% { transform: rotate(-28deg); } 100% { transform: rotate(28deg); } }
+  @keyframes armWave1 { 0%{transform:translateX(-50%) rotate(-38deg)} 100%{transform:translateX(-50%) rotate(38deg)} }
+  @keyframes armWave2 { 0%{transform:translateX(-50%) rotate(33deg)}  100%{transform:translateX(-50%) rotate(-33deg)} }
+  .stick-arm-left  { position: absolute; left: 0; top: 0; width: 19px; height: 2px; background: #2A2C2E; border-radius: 2px; transform-origin: right center; }
+  .stick-arm-right { position: absolute; right: 0; top: 0; width: 19px; height: 2px; background: #2A2C2E; border-radius: 2px; transform-origin: left center; }
+  .stick-legs { position: relative; width: 32px; height: 22px; }
+  .stick-leg-left  { position: absolute; left: 6px; top: 0; width: 2px; height: 20px; background: #2A2C2E; border-radius: 2px; transform-origin: top center; }
+  .stick-leg-right { position: absolute; right: 6px; top: 0; width: 2px; height: 20px; background: #2A2C2E; border-radius: 2px; transform-origin: top center; }
+  .dancer1 .stick-leg-left  { animation: legL1 0.55s ease-in-out infinite alternate; }
+  .dancer1 .stick-leg-right { animation: legR1 0.55s ease-in-out infinite alternate; }
+  .dancer2 .stick-leg-left  { animation: legL2 0.65s ease-in-out infinite alternate; animation-delay: 0.1s; }
+  .dancer2 .stick-leg-right { animation: legR2 0.65s ease-in-out infinite alternate; animation-delay: 0.1s; }
+  @keyframes legL1 { 0%{transform:rotate(-26deg)} 100%{transform:rotate(26deg)} }
+  @keyframes legR1 { 0%{transform:rotate(26deg)}  100%{transform:rotate(-26deg)} }
+  @keyframes legL2 { 0%{transform:rotate(24deg)}  100%{transform:rotate(-24deg)} }
+  @keyframes legR2 { 0%{transform:rotate(-24deg)} 100%{transform:rotate(24deg)} }
 
-  /* Progress bar */
+  /* ===== PROGRESS BAR ===== */
   .progress-bar-container {
-    position: absolute;
-    bottom: 8%; left: 5%;
+    position: absolute; bottom: 4%; left: 5%;
     width: 90%; z-index: 10;
   }
   .progress-label {
-    display: flex;
-    justify-content: space-between;
-    color: white; font-size: 13px; font-weight: bold;
-    margin-bottom: 6px;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    display: flex; justify-content: space-between;
+    color: white; font-size: 9px; font-weight: bold;
+    margin-bottom: 3px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
   }
   .progress-track {
-    width: 100%; height: 22px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 11px;
-    border: 2px solid rgba(255,255,255,0.4);
+    width: 100%; height: 14px;
+    background: rgba(255,255,255,0.2); border-radius: 7px;
+    border: 1.5px solid rgba(255,255,255,0.4);
     overflow: hidden; position: relative;
   }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4B286D, #00A400);
-    border-radius: 11px;
-    width: 0%;
-    animation: fillBar 3s ease-out 1s forwards;
-    position: relative;
-  }
-  @keyframes fillBar {
-    0%   { width: 0%; }
-    100% { width: 75.6%; }
-  }
-  .progress-fill::after {
-    content: '378K';
-    position: absolute;
-    right: 8px; top: 50%;
-    transform: translateY(-50%);
-    color: white; font-size: 11px; font-weight: bold;
-  }
+  .progress-fill { height: 100%; border-radius: 7px; width: 0%; position: relative; }
+  .pf-gm    { background: linear-gradient(90deg, #4B286D, #00A400); animation: fillGm    3s ease-out 1s forwards; }
+  .pf-kddi  { background: linear-gradient(90deg, #0d4a99, #2288ee); animation: fillKddi  3s ease-out 1s forwards; }
+  .pf-cherry{ background: linear-gradient(90deg, #991111, #ee2222); animation: fillCherry 3s ease-out 1s forwards; }
+  @keyframes fillGm    { 0%{width:0%} 100%{width:75.6%} }
+  @keyframes fillKddi  { 0%{width:0%} 100%{width:4.02%} }
+  @keyframes fillCherry{ 0%{width:0%} 100%{width:0.2%} }
+  .pf-gm::after    { content:'378K'; position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
+  .pf-kddi::after  { content:'20.1K'; position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
+  .pf-cherry::after{ content:'0K';   position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
   .progress-pct {
-    position: absolute;
-    right: 8px; top: 50%;
+    position: absolute; right: 6px; top: 50%;
     transform: translateY(-50%);
-    color: #2A2C2E; font-size: 11px; font-weight: bold;
+    color: #2A2C2E; font-size: 8px; font-weight: bold;
   }
 
-  /* Title */
-  .title-banner {
-    position: absolute;
-    top: 3%; left: 50%;
-    transform: translateX(-50%);
-    text-align: center; z-index: 20;
-  }
-  .title-banner h1 {
-    color: #4B286D; font-size: 22px; font-weight: 900;
-    text-shadow: 2px 2px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white;
-    letter-spacing: 1px; white-space: nowrap;
-  }
-  .title-banner p {
-    color: #2A2C2E; font-size: 13px; font-weight: bold;
-    text-shadow: 1px 1px 0 white;
-  }
+  /* ===== TREES ===== */
+  .tree { position: absolute; bottom: calc(22% + 52px); z-index: 3; }
+  .tree-trunk { width: 7px; height: 12px; background: #8B4513; margin: 0 auto; }
+  .tree-top { width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-bottom: 22px solid #228B22; margin: 0 auto; }
 
-  /* Trees */
-  .tree {
-    position: absolute;
-    bottom: calc(22% + 80px);
-    z-index: 3;
-  }
-  .tree-trunk { width: 10px; height: 20px; background: #8B4513; margin: 0 auto; }
-  .tree-top   { width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 35px solid #228B22; margin: 0 auto; }
+  /* ===== BACKGROUND CLOUDS ===== */
+  .cloud { position: absolute; background: white; border-radius: 50px; opacity: 0.65; }
+  .cloud::before, .cloud::after { content: ''; position: absolute; background: white; border-radius: 50%; }
+  .c1 { width: 80px; height: 26px; top: 8%; left: -90px; animation: cloudLoop 65s linear infinite; }
+  .c1::before { width: 40px; height: 40px; top: -20px; left: 8px; }
+  .c1::after  { width: 32px; height: 32px; top: -16px; left: 36px; }
+  .c2 { width: 60px; height: 20px; top: 22%; left: -70px; animation: cloudLoop 85s linear infinite 22s; }
+  .c2::before { width: 30px; height: 30px; top: -15px; left: 6px; }
+  .c2::after  { width: 24px; height: 24px; top: -12px; left: 26px; }
+  @keyframes cloudLoop { 0%{transform:translateX(0)} 100%{transform:translateX(110vw)} }
 
-  /* Editable milestone number */
-  .editable-num {
-    cursor: pointer;
-    border-bottom: 1px dashed rgba(255,255,255,0.6);
-    min-width: 36px;
-    display: inline-block;
-    text-align: center;
-    transition: background 0.2s;
+  /* ===== CONFETTI BURST ===== */
+  .confetti-burst {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 999; display: none;
   }
-  .editable-num:hover {
-    background: rgba(255,255,255,0.2);
-    border-radius: 3px;
+  .burst-piece {
+    position: absolute; border-radius: 3px;
+    animation: burstFall 2s ease-in forwards;
   }
-
-  /* Edit modal */
-  .edit-modal {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: #2A2C2E;
-    color: white;
-    padding: 20px 24px;
-    border-radius: 10px;
-    z-index: 100;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    min-width: 220px;
-    text-align: center;
+  @keyframes burstFall {
+    0%  { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    100%{ transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
   }
-  .edit-modal h3 { margin-bottom: 12px; font-size: 15px; color: #00A400; }
-  .edit-modal input {
-    width: 100%; padding: 8px 10px;
-    border-radius: 6px; border: 2px solid #4B286D;
-    background: #1a1a2e; color: white;
-    font-size: 16px; text-align: center;
-    margin-bottom: 12px;
-    outline: none;
-  }
-  .edit-modal input:focus { border-color: #00A400; }
-  .modal-btns { display: flex; gap: 8px; justify-content: center; }
-  .modal-btns button {
-    padding: 7px 18px;
-    border: none; border-radius: 6px;
-    font-weight: bold; cursor: pointer;
-    font-size: 13px;
-  }
-  .btn-save { background: #00A400; color: white; }
-  .btn-save:hover { background: #007a00; }
-  .btn-cancel { background: #555; color: white; }
-  .btn-cancel:hover { background: #333; }
 </style>
 </head>
 <body>
-<div class="slide-container">
 
-  <!-- Title -->
-  <div class="title-banner">
-    <h1>🚗 GM Vehicle Base Milestone</h1>
-    <p>Current: 378,000 units &nbsp;|&nbsp; Target: 500,000 units</p>
-  </div>
+<!-- CONFETTI BURST -->
+<div class="confetti-burst" id="confettiBurst"></div>
 
-  <!-- Background Clouds -->
-  <div class="cloud cloud1"></div>
-  <div class="cloud cloud2"></div>
-  <div class="cloud cloud3"></div>
-  <div class="cloud cloud4"></div>
-
-  <!-- Road -->
-  <div class="road">
-    <div class="road-line"></div>
-  </div>
-
-  <!-- Warehouse -->
-  <div class="warehouse">
-    <div class="warehouse-building">
-      <div class="warehouse-roof"></div>
-      <div class="warehouse-window left"></div>
-      <div class="warehouse-window right"></div>
-      <div class="warehouse-door"></div>
+<!-- LEADERBOARD -->
+<div class="leaderboard">
+  <h2>🏁 VEHICLE BASE RACE TO 500K 🏁</h2>
+  <div class="lb-entries">
+    <div class="lb-entry rank1">
+      <span class="lb-rank">🥇</span>
+      <span class="lb-name">GM</span>
+      <span class="lb-num" style="color:#00A400;">378K</span>
     </div>
-    <div class="warehouse-label">GM WAREHOUSE</div>
-  </div>
-
-  <!-- Trees -->
-  <div class="tree" style="left: 63%;">
-    <div class="tree-top"></div>
-    <div class="tree-trunk"></div>
-  </div>
-  <div class="tree" style="left: 67%;">
-    <div class="tree-top" style="border-bottom-color: #1a6e1a; border-left-width: 14px; border-right-width: 14px; border-bottom-width: 28px;"></div>
-    <div class="tree-trunk" style="height: 15px;"></div>
-  </div>
-
-  <!-- ===== WEATHER ZONES — high in sky ===== -->
-
-  <!-- 2023: Heavy Rain -->
-  <div class="weather-zone weather-2023">
-    <div class="rain-cloud"></div>
-    <div class="rain-drop" style="height:18px; left:15px; top:32px; animation-delay:0s; animation-duration:0.7s;"></div>
-    <div class="rain-drop" style="height:14px; left:25px; top:34px; animation-delay:0.15s; animation-duration:0.65s;"></div>
-    <div class="rain-drop" style="height:16px; left:35px; top:31px; animation-delay:0.3s; animation-duration:0.72s;"></div>
-    <div class="rain-drop" style="height:18px; left:45px; top:33px; animation-delay:0.1s; animation-duration:0.68s;"></div>
-    <div class="rain-drop" style="height:14px; left:55px; top:35px; animation-delay:0.25s; animation-duration:0.75s;"></div>
-    <div class="rain-drop" style="height:16px; left:65px; top:32px; animation-delay:0.4s; animation-duration:0.7s;"></div>
-    <div class="rain-drop" style="height:18px; left:75px; top:34px; animation-delay:0.05s; animation-duration:0.66s;"></div>
-    <div class="rain-drop" style="height:14px; left:20px; top:50px; animation-delay:0.35s; animation-duration:0.73s;"></div>
-    <div class="rain-drop" style="height:16px; left:50px; top:50px; animation-delay:0.2s; animation-duration:0.69s;"></div>
-    <div class="rain-drop" style="height:18px; left:70px; top:50px; animation-delay:0.45s; animation-duration:0.71s;"></div>
-  </div>
-
-  <!-- 2024: Moderate Rain -->
-  <div class="weather-zone weather-2024">
-    <div class="rain-cloud"></div>
-    <div class="rain-drop" style="height:14px; left:20px; top:30px; animation-delay:0s; animation-duration:0.8s;"></div>
-    <div class="rain-drop" style="height:12px; left:35px; top:32px; animation-delay:0.2s; animation-duration:0.85s;"></div>
-    <div class="rain-drop" style="height:14px; left:50px; top:30px; animation-delay:0.4s; animation-duration:0.78s;"></div>
-    <div class="rain-drop" style="height:12px; left:65px; top:32px; animation-delay:0.15s; animation-duration:0.82s;"></div>
-    <div class="rain-drop" style="height:14px; left:30px; top:48px; animation-delay:0.3s; animation-duration:0.8s;"></div>
-    <div class="rain-drop" style="height:12px; left:55px; top:48px; animation-delay:0.5s; animation-duration:0.76s;"></div>
-  </div>
-
-  <!-- 2025: Partly Sunny -->
-  <div class="weather-zone weather-2025">
-    <div class="small-sun" id="sun2025"></div>
-    <div class="partly-cloud"></div>
-  </div>
-
-  <!-- 2026 (378K): Bright Sun -->
-  <div class="weather-zone weather-2026">
-    <div class="big-sun" id="sun2026"></div>
-  </div>
-
-  <!-- Truck + Trailer -->
-  <div class="truck-wrapper" id="truckWrapper">
-    <div class="trailer">
-      <div class="trailer-person-bubble" id="trailerBubble">
-        <span id="trailerPlaceholder" style="font-size:18px;">⏳</span>
-        <img id="trailerImg" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%;" alt="Trailer Person" />
-      </div>
-      <div class="trailer-body"></div>
-      <div class="trailer-hitch"></div>
-      <div class="trailer-wheel trailer-wheel-left"></div>
-      <div class="trailer-wheel trailer-wheel-right"></div>
+    <div class="lb-entry rank2">
+      <span class="lb-rank">🥈</span>
+      <span class="lb-name">KDDI</span>
+      <span class="lb-num" style="color:#2288ee;">20.1K</span>
     </div>
-    <div class="truck">
-      <div class="exhaust" id="exhaust">
-        <div class="puff"></div>
-        <div class="puff"></div>
-        <div class="puff"></div>
-      </div>
-      <div class="truck-body">
-        <div class="truck-logo">GM</div>
-      </div>
-      <div class="truck-cab">
-        <div class="driver-bubble" id="driverBubble">
-          <span id="driverPlaceholder" style="font-size:18px;">⏳</span>
-          <img id="driverImg" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%;" alt="Driver" />
-        </div>
-        <div class="truck-cab-window"></div>
-      </div>
-      <div class="truck-wheel wheel-back" id="wheelBack"></div>
-      <div class="truck-wheel wheel-front" id="wheelFront"></div>
+    <div class="lb-entry rank3">
+      <span class="lb-rank">🥉</span>
+      <span class="lb-name">Cherry</span>
+      <span class="lb-num" style="color:#ee4444;">0K</span>
     </div>
   </div>
-
-  <!-- 2023 Milestone -->
-  <div class="milestone milestone-year milestone-2023">
-    <div class="milestone-sign">
-      📅 2023<br>
-      <span class="editable-num" id="num2023" data-year="2023" title="Click to edit">0K</span>
-    </div>
-    <div class="milestone-pole"></div>
-  </div>
-
-  <!-- 2024 Milestone -->
-  <div class="milestone milestone-year milestone-2024">
-    <div class="milestone-sign">
-      📅 2024<br>
-      <span class="editable-num" id="num2024" data-year="2024" title="Click to edit">25K</span>
-    </div>
-    <div class="milestone-pole"></div>
-  </div>
-
-  <!-- 2025 Milestone -->
-  <div class="milestone milestone-year milestone-2025">
-    <div class="milestone-sign">
-      📅 2025<br>
-      <span class="editable-num" id="num2025" data-year="2025" title="Click to edit">198K</span>
-    </div>
-    <div class="milestone-pole"></div>
-  </div>
-
-  <!-- 378K Current Milestone -->
-  <div class="milestone milestone-378">
-    <div class="milestone-sign">
-      📍 378K — We Are Here!
-      <span class="milestone-sub" id="currentDate">Apr 2026</span>
-    </div>
-    <div class="milestone-pole"></div>
-  </div>
-
-  <!-- Party Zone -->
-  <div class="party-zone">
-    <div class="balloon b1"></div>
-    <div class="balloon b2"></div>
-    <div class="balloon b3"></div>
-    <div class="balloon b4"></div>
-    <div class="balloon b5"></div>
-    <div class="confetti-piece" style="background:#4B286D; left:20px;  animation-delay:0s;   animation-duration:2s;"></div>
-    <div class="confetti-piece" style="background:#00A400; left:55px;  animation-delay:0.5s; animation-duration:2.3s;"></div>
-    <div class="confetti-piece" style="background:#f0c040; left:90px;  animation-delay:1s;   animation-duration:1.8s;"></div>
-    <div class="confetti-piece" style="background:#e84393; left:130px; animation-delay:0.3s; animation-duration:2.5s;"></div>
-    <div class="confetti-piece" style="background:#00A400; left:170px; animation-delay:0.8s; animation-duration:2.1s;"></div>
-    <div class="confetti-piece" style="background:#4B286D; left:210px; animation-delay:1.2s; animation-duration:1.9s;"></div>
-    <div class="confetti-piece" style="background:#f0c040; left:240px; animation-delay:0.6s; animation-duration:2.2s;"></div>
-    <div class="sparkle" style="left: 30px;  bottom: 55px; animation-delay: 0s;">⭐</div>
-    <div class="sparkle" style="left: 120px; bottom: 65px; animation-delay: 0.4s;">✨</div>
-    <div class="sparkle" style="left: 230px; bottom: 55px; animation-delay: 0.8s;">🌟</div>
-  </div>
-
-  <!-- Dancer 1 -->
-  <div class="dancer-wrapper dancer1" id="dancerWrapper1">
-    <div class="dancer-head">
-      <span id="dancer1Placeholder" style="font-size:22px;">🕺</span>
-      <img id="dancer1Img" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%;" alt="Dancer 1" />
-    </div>
-    <div class="stick-body">
-      <div class="stick-torso"></div>
-      <div class="stick-arms">
-        <div class="stick-arm-left"></div>
-        <div class="stick-arm-right"></div>
-      </div>
-      <div class="stick-legs">
-        <div class="stick-leg-left"></div>
-        <div class="stick-leg-right"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dancer 2 -->
-  <div class="dancer-wrapper dancer2" id="dancerWrapper2">
-    <div class="dancer-head">
-      <span id="dancer2Placeholder" style="font-size:22px;">💃</span>
-      <img id="dancer2Img" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%;" alt="Dancer 2" />
-    </div>
-    <div class="stick-body">
-      <div class="stick-torso"></div>
-      <div class="stick-arms">
-        <div class="stick-arm-left"></div>
-        <div class="stick-arm-right"></div>
-      </div>
-      <div class="stick-legs">
-        <div class="stick-leg-left"></div>
-        <div class="stick-leg-right"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 500K Milestone -->
-  <div class="milestone milestone-500">
-    <div class="milestone-sign">🎉 500K — PARTY TIME! 🎉</div>
-    <div class="milestone-pole"></div>
-  </div>
-
-  <!-- Progress Bar -->
-  <div class="progress-bar-container">
-    <div class="progress-label">
-      <span>🏭 GM Warehouse</span>
-      <span>🎯 Progress: 378K / 500K (75.6%)</span>
-      <span>🎉 500K Goal</span>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill"></div>
-      <span class="progress-pct">500K 🎉</span>
-    </div>
-  </div>
-
 </div>
 
-<!-- Edit Modal -->
-<div class="edit-modal" id="editModal">
-  <h3 id="modalTitle">Enter number</h3>
-  <input type="text" id="modalInput" placeholder="e.g. 250" maxlength="6" />
-  <div class="modal-btns">
-    <button class="btn-save" id="modalSave">✅ Save</button>
-    <button class="btn-cancel" id="modalCancel">✖ Cancel</button>
+<!-- RACE CONTAINER -->
+<div class="race-container">
+
+  <!-- ===== GM LANE ===== -->
+  <div class="race-lane lane-gm">
+    <div class="company-badge badge-gm">🚗 GM</div>
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+
+    <div class="road"><div class="road-line"></div></div>
+
+    <div class="warehouse">
+      <div class="warehouse-building wh-gm">
+        <div class="warehouse-roof roof-gm"></div>
+        <div class="warehouse-door"></div>
+      </div>
+      <div class="warehouse-label">GM WAREHOUSE</div>
+    </div>
+
+    <div class="tree" style="left:55%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+    <div class="tree" style="left:59%"><div class="tree-top" style="border-bottom-color:#1a6e1a;border-left-width:9px;border-right-width:9px;border-bottom-width:18px"></div><div class="tree-trunk" style="height:9px"></div></div>
+
+    <!-- Car GM -->
+    <div class="car-wrapper anim-gm" id="carGm" style="position:absolute;">
+      <div style="position:relative;">
+        <div class="driver-bubble">
+          <span id="gmDrPh" style="font-size:12px">⏳</span>
+          <img id="gmDrImg" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+        </div>
+        <div class="exhaust" id="exGm"><div class="puff"></div><div class="puff"></div><div class="puff"></div></div>
+        <svg class="car-svg" viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="28" width="110" height="18" rx="4" fill="#00A400"/>
+          <path d="M28 28 Q35 10 55 10 L80 10 Q95 10 98 28 Z" fill="#008000"/>
+          <path d="M35 27 Q40 14 55 14 L72 14 Q82 14 85 27 Z" fill="#b8e0ff" opacity="0.85"/>
+          <line x1="62" y1="14" x2="62" y2="27" stroke="#006600" stroke-width="2"/>
+          <circle cx="30" cy="46" r="9" fill="#1a1a1a"/>
+          <circle cx="30" cy="46" r="5" fill="#555"/>
+          <circle cx="30" cy="46" r="2" fill="#888"/>
+          <circle cx="88" cy="46" r="9" fill="#1a1a1a"/>
+          <circle cx="88" cy="46" r="5" fill="#555"/>
+          <circle cx="88" cy="46" r="2" fill="#888"/>
+          <ellipse cx="113" cy="34" rx="4" ry="3" fill="#fffacd"/>
+          <rect x="5" y="30" width="5" height="6" rx="1" fill="#ff4444"/>
+          <text x="50" y="41" font-size="8" font-weight="bold" fill="white" text-anchor="middle">GM</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- GM Milestones -->
+    <div class="milestone milestone-year ms-start">
+      <div class="milestone-sign">📅 2023<br><span>0K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone milestone-year ms-2024">
+      <div class="milestone-sign">📅 2024<br><span>25K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone milestone-year ms-2025">
+      <div class="milestone-sign">📅 2025<br><span>198K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone ms-current-gm">
+      <div class="milestone-sign">📍 378K — We Are Here!<span class="milestone-sub">Apr 2026</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+
+    <!-- Party Zone GM -->
+    <div class="party-zone">
+      <div class="balloon b1"></div><div class="balloon b2"></div><div class="balloon b3"></div>
+      <div class="balloon b4"></div><div class="balloon b5"></div>
+      <div class="confetti-piece" style="background:#4B286D;left:12px;animation-delay:0s;animation-duration:2s"></div>
+      <div class="confetti-piece" style="background:#00A400;left:42px;animation-delay:0.5s;animation-duration:2.3s"></div>
+      <div class="confetti-piece" style="background:#f0c040;left:78px;animation-delay:1s;animation-duration:1.8s"></div>
+      <div class="confetti-piece" style="background:#e84393;left:112px;animation-delay:0.3s;animation-duration:2.5s"></div>
+      <div class="confetti-piece" style="background:#2288ee;left:148px;animation-delay:0.8s;animation-duration:2.1s"></div>
+      <div class="sparkle" style="left:18px;bottom:38px;animation-delay:0s">⭐</div>
+      <div class="sparkle" style="left:98px;bottom:44px;animation-delay:0.4s">✨</div>
+      <div class="sparkle" style="left:175px;bottom:38px;animation-delay:0.8s">🌟</div>
+    </div>
+
+    <!-- Dancers GM — above party zone -->
+    <div class="dancer-wrapper dancer1" style="bottom:calc(42% + 30px);left:79%">
+      <div class="dancer-head">
+        <span id="gmD1Ph" style="font-size:16px">🕺</span>
+        <img id="gmD1Img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+      </div>
+      <div class="stick-body">
+        <div class="stick-torso"></div>
+        <div class="stick-arms"><div class="stick-arm-left"></div><div class="stick-arm-right"></div></div>
+        <div class="stick-legs"><div class="stick-leg-left"></div><div class="stick-leg-right"></div></div>
+      </div>
+    </div>
+    <div class="dancer-wrapper dancer2" style="bottom:calc(42% + 30px);left:85%">
+      <div class="dancer-head">
+        <span id="gmD2Ph" style="font-size:16px">💃</span>
+        <img id="gmD2Img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+      </div>
+      <div class="stick-body">
+        <div class="stick-torso"></div>
+        <div class="stick-arms"><div class="stick-arm-left"></div><div class="stick-arm-right"></div></div>
+        <div class="stick-legs"><div class="stick-leg-left"></div><div class="stick-leg-right"></div></div>
+      </div>
+    </div>
+
+    <div class="milestone ms-500k">
+      <div class="milestone-sign">🎉 500K — PARTY TIME! 🎉</div>
+      <div class="milestone-pole"></div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 378K / 500K (75.6%)</span><span>🎉 500K</span></div>
+      <div class="progress-track">
+        <div class="progress-fill pf-gm"></div>
+        <span class="progress-pct">500K 🎉</span>
+      </div>
+    </div>
   </div>
+
+  <div class="lane-divider"></div>
+
+  <!-- ===== KDDI LANE ===== -->
+  <div class="race-lane lane-kddi">
+    <div class="company-badge badge-kddi">🚙 KDDI</div>
+    <div class="cloud c1" style="animation-delay:18s"></div>
+
+    <div class="road"><div class="road-line"></div></div>
+
+    <div class="warehouse">
+      <div class="warehouse-building wh-kddi">
+        <div class="warehouse-roof roof-kddi"></div>
+        <div class="warehouse-door"></div>
+      </div>
+      <div class="warehouse-label">KDDI WAREHOUSE</div>
+    </div>
+
+    <div class="tree" style="left:55%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+
+    <!-- Car KDDI -->
+    <div class="car-wrapper anim-kddi" id="carKddi" style="position:absolute;">
+      <div style="position:relative;">
+        <div class="driver-bubble">
+          <span id="kddiDrPh" style="font-size:12px">⏳</span>
+          <img id="kddiDrImg" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+        </div>
+        <div class="exhaust" id="exKddi"><div class="puff"></div><div class="puff"></div><div class="puff"></div></div>
+        <svg class="car-svg" viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="28" width="110" height="18" rx="4" fill="#2288ee"/>
+          <path d="M28 28 Q35 10 55 10 L80 10 Q95 10 98 28 Z" fill="#1166cc"/>
+          <path d="M35 27 Q40 14 55 14 L72 14 Q82 14 85 27 Z" fill="#b8e0ff" opacity="0.85"/>
+          <line x1="62" y1="14" x2="62" y2="27" stroke="#0d4a99" stroke-width="2"/>
+          <circle cx="30" cy="46" r="9" fill="#1a1a1a"/>
+          <circle cx="30" cy="46" r="5" fill="#555"/>
+          <circle cx="30" cy="46" r="2" fill="#888"/>
+          <circle cx="88" cy="46" r="9" fill="#1a1a1a"/>
+          <circle cx="88" cy="46" r="5" fill="#555"/>
+          <circle cx="88" cy="46" r="2" fill="#888"/>
+          <ellipse cx="113" cy="34" rx="4" ry="3" fill="#fffacd"/>
+          <rect x="5" y="30" width="5" height="6" rx="1" fill="#ff4444"/>
+          <text x="50" y="41" font-size="7" font-weight="bold" fill="white" text-anchor="middle">KDDI</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- KDDI Milestones -->
+    <div class="milestone milestone-year ms-start">
+      <div class="milestone-sign">📅 2023<br><span>0K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone milestone-year ms-2024">
+      <div class="milestone-sign">📅 2024<br><span>0K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone milestone-year ms-2025">
+      <div class="milestone-sign">📅 2025<br><span>12K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <!-- KDDI current: 20.1K — just right of 2025 sign (which is at 42%), car at ~15% -->
+    <div class="milestone ms-current-kddi">
+      <div class="milestone-sign">📍 20.1K — We Are Here!<span class="milestone-sub">Apr 2026</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+
+    <!-- Party Zone KDDI -->
+    <div class="party-zone">
+      <div class="balloon b1"></div><div class="balloon b2"></div><div class="balloon b3"></div>
+      <div class="balloon b4"></div><div class="balloon b5"></div>
+      <div class="confetti-piece" style="background:#1a6bcc;left:12px;animation-delay:0.2s;animation-duration:2.1s"></div>
+      <div class="confetti-piece" style="background:#f0c040;left:50px;animation-delay:0.7s;animation-duration:2.4s"></div>
+      <div class="confetti-piece" style="background:#00A400;left:88px;animation-delay:1.2s;animation-duration:1.9s"></div>
+      <div class="confetti-piece" style="background:#e84393;left:126px;animation-delay:0.4s;animation-duration:2.6s"></div>
+      <div class="sparkle" style="left:22px;bottom:38px;animation-delay:0.2s">⭐</div>
+      <div class="sparkle" style="left:105px;bottom:44px;animation-delay:0.6s">✨</div>
+      <div class="sparkle" style="left:175px;bottom:38px;animation-delay:1s">🌟</div>
+    </div>
+
+    <!-- Dancers KDDI -->
+    <div class="dancer-wrapper dancer1" style="bottom:calc(42% + 30px);left:79%">
+      <div class="dancer-head">
+        <span id="kddiD1Ph" style="font-size:16px">🕺</span>
+        <img id="kddiD1Img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+      </div>
+      <div class="stick-body">
+        <div class="stick-torso"></div>
+        <div class="stick-arms"><div class="stick-arm-left"></div><div class="stick-arm-right"></div></div>
+        <div class="stick-legs"><div class="stick-leg-left"></div><div class="stick-leg-right"></div></div>
+      </div>
+    </div>
+    <div class="dancer-wrapper dancer2" style="bottom:calc(42% + 30px);left:85%">
+      <div class="dancer-head">
+        <span id="kddiD2Ph" style="font-size:16px">💃</span>
+        <img id="kddiD2Img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+      </div>
+      <div class="stick-body">
+        <div class="stick-torso"></div>
+        <div class="stick-arms"><div class="stick-arm-left"></div><div class="stick-arm-right"></div></div>
+        <div class="stick-legs"><div class="stick-leg-left"></div><div class="stick-leg-right"></div></div>
+      </div>
+    </div>
+
+    <div class="milestone ms-500k">
+      <div class="milestone-sign">🎉 500K — PARTY TIME! 🎉</div>
+      <div class="milestone-pole"></div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 20.1K / 500K (4.02%)</span><span>🎉 500K</span></div>
+      <div class="progress-track">
+        <div class="progress-fill pf-kddi"></div>
+        <span class="progress-pct">500K 🎉</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane-divider"></div>
+
+  <!-- ===== CHERRY LANE ===== -->
+  <div class="race-lane lane-cherry">
+    <div class="company-badge badge-cherry">🍒 Cherry</div>
+    <div class="cloud c2" style="animation-delay:35s"></div>
+
+    <div class="road"><div class="road-line"></div></div>
+
+    <div class="warehouse">
+      <div class="warehouse-building wh-cherry">
+        <div class="warehouse-roof roof-cherry"></div>
+        <div class="warehouse-door"></div>
+      </div>
+      <div class="warehouse-label">CHERRY WAREHOUSE</div>
+    </div>
+
+    <div class="tree" style="left:55%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+
+    <!-- Car Cherry -->
+    <div class="car-wrapper anim-cherry" id="carCherry" style="position:absolute;">
+      <div style="position:relative;">
+        <div class="driver-bubble">
+          <span id="cherryDrPh" style="font-size:12px">⏳</span>
+          <img id="cherryDrImg" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+        </div>
+        <div class="exhaust" id="exCherry"><div class="puff"></div><div class="puff"></div><div class="puff"></div></div>
+        <svg class="car-svg" viewBox="0 0 120 55" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="28" width="110" height="18" rx="4" fill="#ee2222"/>
+          <path d="M28 28 Q35 10 55 10 L80 10 Q95 10 98 28 Z" fill="#cc1111"/>
+          <path d="M35 27 Q40 14 55 14 L72 14 Q82 14 85 27 Z" fill="#b8e0ff" opacity="0.85"/>
+          <line x1="62" y1="14" x2="62" y2="27" stroke="#991111" stroke-width="2"/>
+          <circle cx="30" cy="46" r="9" fill="#1a1a1a"/>
+          <circle cx="30" cy="46" r="5" fill="#555"/>
+          <circle cx="30" cy="46" r="2" fill="#888"/>
+          <circle cx="88" cy="46" r="9" fill="#1a1a1a"/>
+          <circle cx="88" cy="46" r="5" fill="#555"/>
+          <circle cx="88" cy="46" r="2" fill="#888"/>
+          <ellipse cx="113" cy="34" rx="4" ry="3" fill="#fffacd"/>
+          <rect x="5" y="30" width="5" height="6" rx="1" fill="#ff8888"/>
+          <text x="50" y="41" font-size="8" font-weight="bold" fill="white" text-anchor="middle">🍒</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Cherry Milestones -->
+    <div class="milestone milestone-year ms-start">
+      <div class="milestone-sign">📅 2023<br><span>0K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone milestone-year ms-2024">
+      <div class="milestone-sign">📅 2024<br><span>0K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone milestone-year ms-2025">
+      <div class="milestone-sign">📅 2025<br><span>0K</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+    <div class="milestone ms-current-cherry">
+      <div class="milestone-sign">📍 0K — Just Loading!<span class="milestone-sub">Apr 2026</span></div>
+      <div class="milestone-pole"></div>
+    </div>
+
+    <!-- Party Zone Cherry -->
+    <div class="party-zone">
+      <div class="balloon b1"></div><div class="balloon b2"></div><div class="balloon b3"></div>
+      <div class="balloon b4"></div><div class="balloon b5"></div>
+      <div class="confetti-piece" style="background:#cc1a1a;left:12px;animation-delay:0.3s;animation-duration:2.2s"></div>
+      <div class="confetti-piece" style="background:#f0c040;left:48px;animation-delay:0.8s;animation-duration:2.5s"></div>
+      <div class="confetti-piece" style="background:#00A400;left:85px;animation-delay:1.3s;animation-duration:2s"></div>
+      <div class="confetti-piece" style="background:#4B286D;left:122px;animation-delay:0.5s;animation-duration:2.3s"></div>
+      <div class="sparkle" style="left:20px;bottom:38px;animation-delay:0.3s">⭐</div>
+      <div class="sparkle" style="left:100px;bottom:44px;animation-delay:0.7s">✨</div>
+      <div class="sparkle" style="left:175px;bottom:38px;animation-delay:1.1s">🌟</div>
+    </div>
+
+    <!-- Dancers Cherry -->
+    <div class="dancer-wrapper dancer1" style="bottom:calc(42% + 30px);left:79%">
+      <div class="dancer-head">
+        <span id="cherryD1Ph" style="font-size:16px">🕺</span>
+        <img id="cherryD1Img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+      </div>
+      <div class="stick-body">
+        <div class="stick-torso"></div>
+        <div class="stick-arms"><div class="stick-arm-left"></div><div class="stick-arm-right"></div></div>
+        <div class="stick-legs"><div class="stick-leg-left"></div><div class="stick-leg-right"></div></div>
+      </div>
+    </div>
+    <div class="dancer-wrapper dancer2" style="bottom:calc(42% + 30px);left:85%">
+      <div class="dancer-head">
+        <span id="cherryD2Ph" style="font-size:16px">💃</span>
+        <img id="cherryD2Img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""/>
+      </div>
+      <div class="stick-body">
+        <div class="stick-torso"></div>
+        <div class="stick-arms"><div class="stick-arm-left"></div><div class="stick-arm-right"></div></div>
+        <div class="stick-legs"><div class="stick-leg-left"></div><div class="stick-leg-right"></div></div>
+      </div>
+    </div>
+
+    <div class="milestone ms-500k">
+      <div class="milestone-sign">🎉 500K — PARTY TIME! 🎉</div>
+      <div class="milestone-pole"></div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 0K / 500K (Just Starting!)</span><span>🎉 500K</span></div>
+      <div class="progress-track">
+        <div class="progress-fill pf-cherry"></div>
+        <span class="progress-pct">500K 🎉</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  // ===== PHOTOS =====
-  const driverPhotoUrl = 'https://firebasestorage.googleapis.com/v0/b/cdo-fuelix-app-pr-5c588b.appspot.com/o/users%2Fuser-Zx1alcPZwjfXu50r3ZBB%2Ffile-cWBjlOU27TnLljbbNh3C?alt=media&token=756a73e0-de11-486e-b819-60bf9fda5f09';
-  const driverImg = document.getElementById('driverImg');
-  const driverPlaceholder = document.getElementById('driverPlaceholder');
-  driverImg.onload  = () => { driverPlaceholder.style.display = 'none'; driverImg.style.display = 'block'; };
-  driverImg.onerror = () => { driverPlaceholder.innerHTML = '😊'; };
-  driverImg.src = driverPhotoUrl;
+  const driverUrl  = 'https://firebasestorage.googleapis.com/v0/b/cdo-fuelix-app-pr-5c588b.appspot.com/o/users%2Fuser-Zx1alcPZwjfXu50r3ZBB%2Ffile-cWBjlOU27TnLljbbNh3C?alt=media&token=756a73e0-de11-486e-b819-60bf9fda5f09';
+  const dancer1Url = 'https://firebasestorage.googleapis.com/v0/b/cdo-fuelix-app-pr-5c588b.appspot.com/o/users%2Fuser-Zx1alcPZwjfXu50r3ZBB%2Ffile-PAlaKgDQhQEYPv8JTsMI?alt=media&token=050db376-02ac-4751-b799-de8a078dd9ed';
+  const dancer2Url = 'https://firebasestorage.googleapis.com/v0/b/cdo-fuelix-app-pr-5c588b.appspot.com/o/users%2Fuser-Zx1alcPZwjfXu50r3ZBB%2Ffile-pE0SDY7YwSZYcGH7ymI8?alt=media&token=cc9acae5-6d4e-4605-b089-f8ab9a91c3fc';
 
-  const trailerPhotoUrl = 'https://firebasestorage.googleapis.com/v0/b/cdo-fuelix-app-pr-5c588b.appspot.com/o/users%2Fuser-Zx1alcPZwjfXu50r3ZBB%2Ffile-Draa8xxHpsWWErEuBsXL?alt=media&token=ca1bae33-d96c-4964-b648-03f5ca83cb40';
-  const trailerImg = document.getElementById('trailerImg');
-  const trailerPlaceholder = document.getElementById('trailerPlaceholder');
-  trailerImg.onload  = () => { trailerPlaceholder.style.display = 'none'; trailerImg.style.display = 'block'; };
-  trailerImg.onerror = () => { trailerPlaceholder.innerHTML = '😊'; };
-  trailerImg.src = trailerPhotoUrl;
-
-  const dancer1PhotoUrl = 'https://firebasestorage.googleapis.com/v0/b/cdo-fuelix-app-pr-5c588b.appspot.com/o/users%2Fuser-Zx1alcPZwjfXu50r3ZBB%2Ffile-PAlaKgDQhQEYPv8JTsMI?alt=media&token=050db376-02ac-4751-b799-de8a078dd9ed';
-  const dancer1Img = document.getElementById('dancer1Img');
-  const dancer1Placeholder = document.getElementById('dancer1Placeholder');
-  dancer1Img.onload  = () => { dancer1Placeholder.style.display = 'none'; dancer1Img.style.display = 'block'; };
-  dancer1Img.onerror = () => { dancer1Placeholder.innerHTML = '🕺'; };
-  dancer1Img.src = dancer1PhotoUrl;
-
-  const dancer2PhotoUrl = 'https://firebasestorage.googleapis.com/v0/b/cdo-fuelix-app-pr-5c588b.appspot.com/o/users%2Fuser-Zx1alcPZwjfXu50r3ZBB%2Ffile-pE0SDY7YwSZYcGH7ymI8?alt=media&token=cc9acae5-6d4e-4605-b089-f8ab9a91c3fc';
-  const dancer2Img = document.getElementById('dancer2Img');
-  const dancer2Placeholder = document.getElementById('dancer2Placeholder');
-  dancer2Img.onload  = () => { dancer2Placeholder.style.display = 'none'; dancer2Img.style.display = 'block'; };
-  dancer2Img.onerror = () => { dancer2Placeholder.innerHTML = '💃'; };
-  dancer2Img.src = dancer2PhotoUrl;
-
-  // ===== STOP WHEELS =====
-  const wheels  = document.querySelectorAll('.truck-wheel, .trailer-wheel');
-  const exhaust = document.getElementById('exhaust');
-  setTimeout(() => {
-    wheels.forEach(w => { w.style.animationPlayState = 'paused'; });
-    if (exhaust) exhaust.style.display = 'none';
-  }, 5000);
-
-  // ===== SUN RAYS =====
-  function addRays(sunEl, count, length, color) {
-    const size = parseInt(sunEl.style.width) || 44;
-    for (let i = 0; i < count; i++) {
-      const ray = document.createElement('div');
-      const angle = i * (360 / count);
-      ray.style.cssText = `
-        position: absolute;
-        width: 3px;
-        height: ${length}px;
-        background: linear-gradient(to top, ${color}, transparent);
-        border-radius: 2px;
-        top: 50%; left: 50%;
-        transform-origin: 0 0;
-        transform: rotate(${angle}deg) translateY(-${size / 2 + 5}px);
-      `;
-      sunEl.appendChild(ray);
-    }
+  function loadImg(imgId, phId, url, fallback) {
+    const img = document.getElementById(imgId);
+    const ph  = document.getElementById(phId);
+    if (!img || !ph) return;
+    img.onload  = () => { ph.style.display='none'; img.style.display='block'; };
+    img.onerror = () => { ph.innerHTML = fallback; };
+    img.src = url;
   }
 
-  const sun2025 = document.getElementById('sun2025');
-  addRays(sun2025, 6, 10, '#f0c040');
+  // GM
+  loadImg('gmDrImg',  'gmDrPh',  driverUrl,  '😊');
+  loadImg('gmD1Img',  'gmD1Ph',  dancer1Url, '🕺');
+  loadImg('gmD2Img',  'gmD2Ph',  dancer2Url, '💃');
 
-  const sun2026 = document.getElementById('sun2026');
-  addRays(sun2026, 8, 14, '#f0c040');
+  // KDDI
+  loadImg('kddiDrImg',  'kddiDrPh',  driverUrl,  '😊');
+  loadImg('kddiD1Img',  'kddiD1Ph',  dancer1Url, '🕺');
+  loadImg('kddiD2Img',  'kddiD2Ph',  dancer2Url, '💃');
 
-  // ===== EDITABLE MILESTONE NUMBERS =====
-  let activeEl = null;
-  const modal = document.getElementById('editModal');
-  const modalInput = document.getElementById('modalInput');
-  const modalTitle = document.getElementById('modalTitle');
+  // Cherry
+  loadImg('cherryDrImg',  'cherryDrPh',  driverUrl,  '😊');
+  loadImg('cherryD1Img',  'cherryD1Ph',  dancer1Url, '🕺');
+  loadImg('cherryD2Img',  'cherryD2Ph',  dancer2Url, '💃');
 
-  document.querySelectorAll('.editable-num').forEach(el => {
-    el.addEventListener('click', () => {
-      activeEl = el;
-      const year = el.dataset.year;
-      const current = el.textContent.replace('K', '').trim();
-      modalTitle.textContent = `Enter units for ${year} (e.g. 250):`;
-      modalInput.value = current === '___' ? '' : current;
-      modal.style.display = 'block';
-      setTimeout(() => modalInput.focus(), 50);
+  // Stop exhaust after animation
+  setTimeout(() => {
+    ['exGm','exKddi','exCherry'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
     });
-  });
+  }, 5300);
 
-  document.getElementById('modalSave').addEventListener('click', () => {
-    if (activeEl && modalInput.value.trim() !== '') {
-      activeEl.textContent = modalInput.value.trim() + 'K';
+  // Confetti burst on load
+  function launchConfetti() {
+    const burst = document.getElementById('confettiBurst');
+    burst.style.display = 'block';
+    burst.innerHTML = '';
+    const colors = ['#4B286D','#00A400','#f0c040','#e84393','#2288ee','#cc1a1a','#fff'];
+    for (let i = 0; i < 140; i++) {
+      const p = document.createElement('div');
+      p.className = 'burst-piece';
+      p.style.cssText = `
+        left: ${Math.random()*100}%;
+        top: ${Math.random()*25}%;
+        background: ${colors[Math.floor(Math.random()*colors.length)]};
+        animation-delay: ${Math.random()*0.8}s;
+        animation-duration: ${1.5 + Math.random()*1.5}s;
+        width: ${6+Math.random()*8}px;
+        height: ${6+Math.random()*8}px;
+        border-radius: ${Math.random()>0.5?'50%':'3px'};
+      `;
+      burst.appendChild(p);
     }
-    modal.style.display = 'none';
-    activeEl = null;
-  });
+    setTimeout(() => { burst.style.display = 'none'; }, 3200);
+  }
 
-  document.getElementById('modalCancel').addEventListener('click', () => {
-    modal.style.display = 'none';
-    activeEl = null;
-  });
-
-  modalInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('modalSave').click();
-    if (e.key === 'Escape') document.getElementById('modalCancel').click();
-  });
+  setTimeout(launchConfetti, 600);
 </script>
 </body>
 </html>
