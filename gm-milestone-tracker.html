@@ -1,5 +1,4 @@
-
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -126,10 +125,8 @@
   /* ===== CAR ===== */
   /*
     Track: 12% (start) to 88% (500K) = 76% wide
-    GM:     378K/500K = 75.6% → 12% + 57.5% = ~69%
-    KDDI:   20.1K/500K = 4.02% → 12% + 3.1% = ~15% proportional
-            But "We Are Here" sign is at 46% (just right of 2025 sign at 42%)
-            Move KDDI car to ~44% to be near the 20.1K sign
+    GM:     408.52K/500K = 81.7% → 12% + (81.7% × 76%) = 12% + 62.1% = ~74%
+    KDDI:   40.3K/500K  = 8.06% → 12% + (8.06% × 76%) = 12% + 6.1%  = ~18%
     Cherry: ~0K → stays near 12%
   */
   .car-wrapper {
@@ -140,9 +137,9 @@
   .anim-kddi  { animation: carKddi  5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
   .anim-cherry{ animation: carCherry 5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
 
-  /* GM stops at 69%, KDDI stops at 43% (just left of the 20.1K sign at 46%), Cherry stays near start */
-  @keyframes carGm     { 0%{left:12%} 85%{left:70%} 92%{left:68.5%} 100%{left:69%} }
-  @keyframes carKddi   { 0%{left:12%} 85%{left:44%} 92%{left:42.5%} 100%{left:43%} }
+  /* GM stops at ~74%, KDDI stops at ~19% (near 40.3K sign), Cherry stays near start */
+  @keyframes carGm     { 0%{left:12%} 85%{left:75%} 92%{left:73.5%} 100%{left:74%} }
+  @keyframes carKddi   { 0%{left:12%} 85%{left:20%} 92%{left:18.5%} 100%{left:19%} }
   @keyframes carCherry { 0%{left:12%} 85%{left:13%} 92%{left:12.2%} 100%{left:12.5%} }
 
   .car-svg {
@@ -199,16 +196,17 @@
     2023 (0K):   12%
     2024 (25K):  12% + (25/500 × 76%) = ~15.8% → 16%
     2025 (198K for GM, 12K for KDDI): 12% + (198/500 × 76%) = ~42%
-    GM current (378K): 12% + (378/500 × 76%) = ~69%
-    KDDI current (20.1K): placed at 46% — just right of 2025 sign at 42%
+    GM current (408.52K): 12% + (408.52/500 × 76%) = ~74% → sign at 74%
+    KDDI current (40.3K): 12% + (40.3/500 × 76%) = ~18.1% → sign at 22% (just right of 2025 sign)
     Cherry current (0K): ~13%
     500K: 88%
   */
   .ms-start  { left: 12%; }
   .ms-2024   { left: 16%; }
   .ms-2025   { left: 42%; }
-  .ms-current-gm    { left: 69%; }
-  .ms-current-kddi  { left: 46%; }
+  .ms-current-gm    { left: 74%; }
+  /* KDDI 40.3K is past the 2025 sign (12K), so place it just right of 2025 sign */
+  .ms-current-kddi  { left: 47%; }
   .ms-current-cherry{ left: 13%; }
   .ms-500k { left: 88%; }
 
@@ -334,12 +332,13 @@
   .pf-gm    { background: linear-gradient(90deg, #4B286D, #00A400); animation: fillGm    3s ease-out 1s forwards; }
   .pf-kddi  { background: linear-gradient(90deg, #0d4a99, #2288ee); animation: fillKddi  3s ease-out 1s forwards; }
   .pf-cherry{ background: linear-gradient(90deg, #991111, #ee2222); animation: fillCherry 3s ease-out 1s forwards; }
-  @keyframes fillGm    { 0%{width:0%} 100%{width:75.6%} }
-  @keyframes fillKddi  { 0%{width:0%} 100%{width:4.02%} }
+  /* GM: 408.52/500 = 81.7%, KDDI: 40.3/500 = 8.06% */
+  @keyframes fillGm    { 0%{width:0%} 100%{width:81.7%} }
+  @keyframes fillKddi  { 0%{width:0%} 100%{width:8.06%} }
   @keyframes fillCherry{ 0%{width:0%} 100%{width:0.2%} }
-  .pf-gm::after    { content:'378K'; position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
-  .pf-kddi::after  { content:'20.1K'; position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
-  .pf-cherry::after{ content:'0K';   position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
+  .pf-gm::after    { content:'408.52K'; position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
+  .pf-kddi::after  { content:'40.3K';  position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
+  .pf-cherry::after{ content:'0K';     position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
   .progress-pct {
     position: absolute; right: 6px; top: 50%;
     transform: translateY(-50%);
@@ -390,12 +389,12 @@
     <div class="lb-entry rank1">
       <span class="lb-rank">🥇</span>
       <span class="lb-name">GM</span>
-      <span class="lb-num" style="color:#00A400;">378K</span>
+      <span class="lb-num" style="color:#00A400;">408.52K</span>
     </div>
     <div class="lb-entry rank2">
       <span class="lb-rank">🥈</span>
       <span class="lb-name">KDDI</span>
-      <span class="lb-num" style="color:#2288ee;">20.1K</span>
+      <span class="lb-num" style="color:#2288ee;">40.3K</span>
     </div>
     <div class="lb-entry rank3">
       <span class="lb-rank">🥉</span>
@@ -424,8 +423,8 @@
       <div class="warehouse-label">GM WAREHOUSE</div>
     </div>
 
-    <div class="tree" style="left:55%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
-    <div class="tree" style="left:59%"><div class="tree-top" style="border-bottom-color:#1a6e1a;border-left-width:9px;border-right-width:9px;border-bottom-width:18px"></div><div class="tree-trunk" style="height:9px"></div></div>
+    <div class="tree" style="left:60%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+    <div class="tree" style="left:64%"><div class="tree-top" style="border-bottom-color:#1a6e1a;border-left-width:9px;border-right-width:9px;border-bottom-width:18px"></div><div class="tree-trunk" style="height:9px"></div></div>
 
     <!-- Car GM -->
     <div class="car-wrapper anim-gm" id="carGm" style="position:absolute;">
@@ -467,7 +466,7 @@
       <div class="milestone-pole"></div>
     </div>
     <div class="milestone ms-current-gm">
-      <div class="milestone-sign">📍 378K — We Are Here!<span class="milestone-sub">Apr 2026</span></div>
+      <div class="milestone-sign">📍 408.52K — We Are Here!<span class="milestone-sub">May 2026</span></div>
       <div class="milestone-pole"></div>
     </div>
 
@@ -515,7 +514,7 @@
     </div>
 
     <div class="progress-bar-container">
-      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 378K / 500K (75.6%)</span><span>🎉 500K</span></div>
+      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 408.52K / 500K (81.7%)</span><span>🎉 500K</span></div>
       <div class="progress-track">
         <div class="progress-fill pf-gm"></div>
         <span class="progress-pct">500K 🎉</span>
@@ -540,9 +539,9 @@
       <div class="warehouse-label">KDDI WAREHOUSE</div>
     </div>
 
-    <div class="tree" style="left:55%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+    <div class="tree" style="left:60%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
 
-    <!-- Car KDDI — animates to ~43%, just left of the 20.1K sign at 46% -->
+    <!-- Car KDDI — animates to ~19%, near 40.3K sign -->
     <div class="car-wrapper anim-kddi" id="carKddi" style="position:absolute;">
       <div style="position:relative;">
         <div class="driver-bubble">
@@ -581,9 +580,9 @@
       <div class="milestone-sign">📅 2025<br><span>12K</span></div>
       <div class="milestone-pole"></div>
     </div>
-    <!-- KDDI current: 20.1K — placed at 46%, just right of 2025 sign at 42% -->
+    <!-- KDDI current: 40.3K — placed at 47%, just right of 2025 sign at 42% -->
     <div class="milestone ms-current-kddi">
-      <div class="milestone-sign">📍 20.1K — We Are Here!<span class="milestone-sub">Apr 2026</span></div>
+      <div class="milestone-sign">📍 40.3K — We Are Here!<span class="milestone-sub">May 2026</span></div>
       <div class="milestone-pole"></div>
     </div>
 
@@ -630,7 +629,7 @@
     </div>
 
     <div class="progress-bar-container">
-      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 20.1K / 500K (4.02%)</span><span>🎉 500K</span></div>
+      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 40.3K / 500K (8.06%)</span><span>🎉 500K</span></div>
       <div class="progress-track">
         <div class="progress-fill pf-kddi"></div>
         <span class="progress-pct">500K 🎉</span>
@@ -655,7 +654,7 @@
       <div class="warehouse-label">CHERRY WAREHOUSE</div>
     </div>
 
-    <div class="tree" style="left:55%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
+    <div class="tree" style="left:60%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
 
     <!-- Car Cherry -->
     <div class="car-wrapper anim-cherry" id="carCherry" style="position:absolute;">
@@ -697,7 +696,7 @@
       <div class="milestone-pole"></div>
     </div>
     <div class="milestone ms-current-cherry">
-      <div class="milestone-sign">📍 0K — Just Loading!<span class="milestone-sub">Apr 2026</span></div>
+      <div class="milestone-sign">📍 0K — Just Loading!<span class="milestone-sub">May 2026</span></div>
       <div class="milestone-pole"></div>
     </div>
 
