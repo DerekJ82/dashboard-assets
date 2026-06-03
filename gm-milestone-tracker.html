@@ -125,9 +125,13 @@
   /* ===== CAR ===== */
   /*
     Track: 12% (start) to 88% (500K) = 76% wide
-    GM:     408.52K/500K = 81.7% → 12% + (81.7% × 76%) = 12% + 62.1% = ~74%
-    KDDI:   40.3K/500K  = 8.06% → 12% + (8.06% × 76%) = 12% + 6.1%  = ~18%
+    GM:     408.52K/500K = 81.7% → 12% + (81.7% × 76%) = ~74%
+    KDDI:   40.3K/500K  = 8.06% → sign placed at 47%
+            Car should stop just left of the sign at 47%, so car at ~44%
     Cherry: ~0K → stays near 12%
+
+    KEY FIX: KDDI sign is at left:47%, car animation ends at 44%
+    so car front (90px wide) reaches right up to the sign pole
   */
   .car-wrapper {
     position: absolute; bottom: calc(22% + 52px);
@@ -137,9 +141,9 @@
   .anim-kddi  { animation: carKddi  5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
   .anim-cherry{ animation: carCherry 5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
 
-  /* GM stops at ~74%, KDDI stops at ~19% (near 40.3K sign), Cherry stays near start */
   @keyframes carGm     { 0%{left:12%} 85%{left:75%} 92%{left:73.5%} 100%{left:74%} }
-  @keyframes carKddi   { 0%{left:12%} 85%{left:20%} 92%{left:18.5%} 100%{left:19%} }
+  /* KDDI sign is at 47%, car is 90px (~7% of typical 1280px screen), so car stops at ~40% to be right beside sign */
+  @keyframes carKddi   { 0%{left:12%} 85%{left:41%} 92%{left:39.5%} 100%{left:40%} }
   @keyframes carCherry { 0%{left:12%} 85%{left:13%} 92%{left:12.2%} 100%{left:12.5%} }
 
   .car-svg {
@@ -196,8 +200,8 @@
     2023 (0K):   12%
     2024 (25K):  12% + (25/500 × 76%) = ~15.8% → 16%
     2025 (198K for GM, 12K for KDDI): 12% + (198/500 × 76%) = ~42%
-    GM current (408.52K): 12% + (408.52/500 × 76%) = ~74% → sign at 74%
-    KDDI current (40.3K): 12% + (40.3/500 × 76%) = ~18.1% → sign at 22% (just right of 2025 sign)
+    GM current (408.52K): 12% + (408.52/500 × 76%) = ~74%
+    KDDI current (40.3K): placed at 47% — just right of 2025 sign at 42%
     Cherry current (0K): ~13%
     500K: 88%
   */
@@ -205,7 +209,6 @@
   .ms-2024   { left: 16%; }
   .ms-2025   { left: 42%; }
   .ms-current-gm    { left: 74%; }
-  /* KDDI 40.3K is past the 2025 sign (12K), so place it just right of 2025 sign */
   .ms-current-kddi  { left: 47%; }
   .ms-current-cherry{ left: 13%; }
   .ms-500k { left: 88%; }
@@ -332,7 +335,6 @@
   .pf-gm    { background: linear-gradient(90deg, #4B286D, #00A400); animation: fillGm    3s ease-out 1s forwards; }
   .pf-kddi  { background: linear-gradient(90deg, #0d4a99, #2288ee); animation: fillKddi  3s ease-out 1s forwards; }
   .pf-cherry{ background: linear-gradient(90deg, #991111, #ee2222); animation: fillCherry 3s ease-out 1s forwards; }
-  /* GM: 408.52/500 = 81.7%, KDDI: 40.3/500 = 8.06% */
   @keyframes fillGm    { 0%{width:0%} 100%{width:81.7%} }
   @keyframes fillKddi  { 0%{width:0%} 100%{width:8.06%} }
   @keyframes fillCherry{ 0%{width:0%} 100%{width:0.2%} }
@@ -541,7 +543,7 @@
 
     <div class="tree" style="left:60%"><div class="tree-top"></div><div class="tree-trunk"></div></div>
 
-    <!-- Car KDDI — animates to ~19%, near 40.3K sign -->
+    <!-- Car KDDI — animates to 40%, sign is at 47%, car front reaches sign -->
     <div class="car-wrapper anim-kddi" id="carKddi" style="position:absolute;">
       <div style="position:relative;">
         <div class="driver-bubble">
@@ -580,7 +582,7 @@
       <div class="milestone-sign">📅 2025<br><span>12K</span></div>
       <div class="milestone-pole"></div>
     </div>
-    <!-- KDDI current: 40.3K — placed at 47%, just right of 2025 sign at 42% -->
+    <!-- KDDI current: 40.3K — placed at 47%, car stops at 40% so front of car (~7% wide) reaches sign -->
     <div class="milestone ms-current-kddi">
       <div class="milestone-sign">📍 40.3K — We Are Here!<span class="milestone-sub">May 2026</span></div>
       <div class="milestone-pole"></div>
@@ -789,6 +791,24 @@
       if (el) el.style.display = 'none';
     });
   }, 5300);
+
+  // Dynamic alignment: after animation ends, nudge KDDI car to align with sign
+  setTimeout(() => {
+    const lane = document.querySelector('.lane-kddi');
+    const car  = document.getElementById('carKddi');
+    const sign = lane ? lane.querySelector('.ms-current-kddi') : null;
+    if (car && sign && lane) {
+      const laneW   = lane.offsetWidth;
+      const signPct = 47; // ms-current-kddi left: 47%
+      const signPx  = (signPct / 100) * laneW;
+      const carW    = car.offsetWidth; // ~90px
+      // Position car so its right edge aligns with sign pole
+      const targetPx = signPx - carW;
+      const targetPct = (targetPx / laneW) * 100;
+      car.style.animation = 'none';
+      car.style.left = targetPct + '%';
+    }
+  }, 5400);
 
   // Confetti burst on load
   function launchConfetti() {
