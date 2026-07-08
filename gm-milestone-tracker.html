@@ -60,8 +60,8 @@
   /* CAR */
   /*
     Track: 12% (start) to 88% (500K) = 76% wide
-    GM:     415K/500K = 83%   → 12% + (83% × 76%) = ~75%
-    KDDI:   40.3K/500K = 8.06% → sign at 47%, car stops at 40%
+    GM:     437958/500000 = 87.59%  → 12% + (87.59% × 76%) = ~78.57%
+    KDDI:   40339/500000 = 8.07%   → 12% + (8.07% × 76%) = ~18.13%
     Cherry: ~0K → stays near 12%
   */
   .car-wrapper { position: absolute; bottom: calc(22% + 52px); z-index: 10; }
@@ -69,8 +69,8 @@
   .anim-kddi  { animation: carKddi  5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
   .anim-cherry{ animation: carCherry 5s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
 
-  @keyframes carGm     { 0%{left:12%} 85%{left:76%} 92%{left:74.5%} 100%{left:75%} }
-  @keyframes carKddi   { 0%{left:12%} 85%{left:41%} 92%{left:39.5%} 100%{left:40%} }
+  @keyframes carGm     { 0%{left:12%} 85%{left:80%} 92%{left:78%} 100%{left:78.57%} }
+  @keyframes carKddi   { 0%{left:12%} 85%{left:20%} 92%{left:17.5%} 100%{left:18.13%} }
   @keyframes carCherry { 0%{left:12%} 85%{left:13%} 92%{left:12.2%} 100%{left:12.5%} }
 
   .car-svg { width: 90px; height: auto; display: block; }
@@ -99,16 +99,16 @@
     2023 (0K):   12%
     2024 (25K):  12% + (25/500 × 76%) = ~15.8% → 16%
     2025 (198K for GM, 12K for KDDI): 12% + (198/500 × 76%) = ~42%
-    GM current (415K): 12% + (415/500 × 76%) = ~75%
-    KDDI current (40.3K): placed at 47% — just right of 2025 sign at 42%
+    GM current (437958): 12% + (437958/500000 × 76%) = ~78.57%
+    KDDI current (40339): 12% + (40339/500000 × 76%) = ~18.13%
     Cherry current (0K): ~13%
     500K: 88%
   */
   .ms-start  { left: 12%; }
   .ms-2024   { left: 16%; }
   .ms-2025   { left: 42%; }
-  .ms-current-gm    { left: 75%; }
-  .ms-current-kddi  { left: 47%; }
+  .ms-current-gm    { left: 78.57%; }
+  .ms-current-kddi  { left: 22%; }
   .ms-current-cherry{ left: 13%; }
   .ms-500k { left: 88%; }
 
@@ -173,12 +173,12 @@
   .pf-gm    { background: linear-gradient(90deg, #4B286D, #00A400); animation: fillGm    3s ease-out 1s forwards; }
   .pf-kddi  { background: linear-gradient(90deg, #0d4a99, #2288ee); animation: fillKddi  3s ease-out 1s forwards; }
   .pf-cherry{ background: linear-gradient(90deg, #991111, #ee2222); animation: fillCherry 3s ease-out 1s forwards; }
-  /* GM: 415/500 = 83%, KDDI: 40.3/500 = 8.06% */
-  @keyframes fillGm    { 0%{width:0%} 100%{width:83%} }
-  @keyframes fillKddi  { 0%{width:0%} 100%{width:8.06%} }
+  /* GM: 437958/500000 = 87.59%, KDDI: 40339/500000 = 8.07% */
+  @keyframes fillGm    { 0%{width:0%} 100%{width:87.59%} }
+  @keyframes fillKddi  { 0%{width:0%} 100%{width:8.07%} }
   @keyframes fillCherry{ 0%{width:0%} 100%{width:0.2%} }
-  .pf-gm::after    { content:'415K';   position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
-  .pf-kddi::after  { content:'40.3K';  position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
+  .pf-gm::after    { content:'437,958'; position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
+  .pf-kddi::after  { content:'40,339'; position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
   .pf-cherry::after{ content:'0K';     position:absolute; right:6px; top:50%; transform:translateY(-50%); color:white; font-size:8px; font-weight:bold; }
   .progress-pct { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); color: #2A2C2E; font-size: 8px; font-weight: bold; }
 
@@ -252,12 +252,12 @@
     <div class="lb-entry rank1">
       <span class="lb-rank">🥇</span>
       <span class="lb-name">GM</span>
-      <span class="lb-num" style="color:#00A400;">415K</span>
+      <span class="lb-num" style="color:#00A400;">437,958</span>
     </div>
     <div class="lb-entry rank2">
       <span class="lb-rank">🥈</span>
       <span class="lb-name">KDDI</span>
-      <span class="lb-num" style="color:#2288ee;">40.3K</span>
+      <span class="lb-num" style="color:#2288ee;">40,339</span>
     </div>
     <div class="lb-entry rank3">
       <span class="lb-rank">🥉</span>
@@ -320,8 +320,8 @@
       <div class="milestone-sign">📅 2025<br><span>198K</span></div>
       <div class="milestone-pole"></div>
     </div>
-    <div class="milestone ms-current-gm" onclick="showMilestone('Jun 2026','GM','415K','Current position — 83% to goal!')">
-      <div class="milestone-sign">📍 415K — We Are Here!<span class="milestone-sub">Jun 2026</span></div>
+    <div class="milestone ms-current-gm" onclick="showMilestone('Jun 2026','GM','437,958','Current position — 87.59% to goal!')">
+      <div class="milestone-sign">📍 437,958 — We Are Here!<span class="milestone-sub">Jun 2026</span></div>
       <div class="milestone-pole"></div>
     </div>
 
@@ -355,7 +355,7 @@
     </div>
 
     <div class="progress-bar-container">
-      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 415K / 500K (83%)</span><span>🎉 500K</span></div>
+      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 437,958 / 500K (87.59%)</span><span>🎉 500K</span></div>
       <div class="progress-track"><div class="progress-fill pf-gm"></div><span class="progress-pct">500K 🎉</span></div>
     </div>
   </div>
@@ -411,8 +411,8 @@
       <div class="milestone-sign">📅 2025<br><span>12K</span></div>
       <div class="milestone-pole"></div>
     </div>
-    <div class="milestone ms-current-kddi" onclick="showMilestone('Jun 2026','KDDI','40.3K','Current position — 8.06% to goal!')">
-      <div class="milestone-sign">📍 40.3K — We Are Here!<span class="milestone-sub">Jun 2026</span></div>
+    <div class="milestone ms-current-kddi" onclick="showMilestone('Jun 2026','KDDI','40,339','Current position — 8.07% to goal!')">
+      <div class="milestone-sign">📍 40,339 — We Are Here!<span class="milestone-sub">Jun 2026</span></div>
       <div class="milestone-pole"></div>
     </div>
 
@@ -445,7 +445,7 @@
     </div>
 
     <div class="progress-bar-container">
-      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 40.3K / 500K (8.06%)</span><span>🎉 500K</span></div>
+      <div class="progress-label"><span>🏭 Warehouse</span><span>🎯 40,339 / 500K (8.07%)</span><span>🎉 500K</span></div>
       <div class="progress-track"><div class="progress-fill pf-kddi"></div><span class="progress-pct">500K 🎉</span></div>
     </div>
   </div>
@@ -581,7 +581,7 @@
     const sign = lane ? lane.querySelector('.ms-current-kddi') : null;
     if (car && sign && lane) {
       const laneW   = lane.offsetWidth;
-      const signPct = 47;
+      const signPct = 22;
       const signPx  = (signPct / 100) * laneW;
       const carW    = car.offsetWidth;
       const targetPx  = signPx - carW;
@@ -619,12 +619,12 @@
   function showStats() {
     document.getElementById('modalTitle').textContent = '📊 Race Standings — June 2026';
     document.getElementById('modalContent').innerHTML = `
-      <div class="stat-row"><span class="stat-label">🥇 GM</span><span class="stat-val">415K (83%)</span></div>
-      <div class="stat-row"><span class="stat-label">🥈 KDDI</span><span class="stat-val">40.3K (8.06%)</span></div>
+      <div class="stat-row"><span class="stat-label">🥇 GM</span><span class="stat-val">437,958 (87.59%)</span></div>
+      <div class="stat-row"><span class="stat-label">🥈 KDDI</span><span class="stat-val">40,339 (8.07%)</span></div>
       <div class="stat-row"><span class="stat-label">🥉 Cherry</span><span class="stat-val">0K (Just Starting)</span></div>
       <div class="stat-row"><span class="stat-label">🎯 Target</span><span class="stat-val">500K</span></div>
       <div class="stat-row"><span class="stat-label">📅 Updated</span><span class="stat-val">June 2026</span></div>
-      <p style="margin-top:10px;font-size:0.8rem;color:#a78bca;">GM is crushing it at 83% — only 85K to go! 🚀</p>
+      <p style="margin-top:10px;font-size:0.8rem;color:#a78bca;">GM is crushing it at 87.59% — only 62,042 to go! 🚀</p>
     `;
     document.getElementById('modalOverlay').classList.add('active');
   }
@@ -632,8 +632,8 @@
   // Show company info
   function showCompanyInfo(company) {
     const data = {
-      gm:     { title: '🚗 GM — Race Leader', color: '#00A400', current: '415K', pct: '83%', y2025: '198K', y2024: '25K', note: 'Dominating the race! 85K away from the 500K goal. Keep pushing! 🔥' },
-      kddi:   { title: '🚙 KDDI — Picking Up Speed', color: '#2288ee', current: '40.3K', pct: '8.06%', y2025: '12K', y2024: '0K', note: 'Strong growth from 12K to 40.3K — more than tripled since 2025! 📈' },
+      gm:     { title: '🚗 GM — Race Leader', color: '#00A400', current: '437,958', pct: '87.59%', y2025: '198K', y2024: '25K', note: 'Dominating the race! Only 62,042 away from the 500K goal. Keep pushing! 🔥' },
+      kddi:   { title: '🚙 KDDI — Picking Up Speed', color: '#2288ee', current: '40,339', pct: '8.07%', y2025: '12K', y2024: '0K', note: 'Strong growth from 12K to 40,339 — more than tripled since 2025! 📈' },
       cherry: { title: '🍒 Cherry — Loading...', color: '#ee2222', current: '0K', pct: '0%', y2025: '0K', y2024: '0K', note: 'Just getting started. Watch this space! 🌱' }
     };
     const d = data[company];
@@ -676,7 +676,6 @@
       void el.offsetWidth; // reflow
     });
     document.querySelectorAll('.progress-fill').forEach(f => {
-      const anim = f.style.animation || f.className;
       f.style.animation = 'none';
       f.style.width = '0';
       void f.offsetWidth;
@@ -701,7 +700,7 @@
       const car  = document.getElementById('carKddi');
       if (car && lane) {
         const laneW = lane.offsetWidth;
-        const signPx = (47 / 100) * laneW;
+        const signPx = (22 / 100) * laneW;
         const carW = car.offsetWidth;
         const targetPct = ((signPx - carW) / laneW) * 100;
         car.style.animation = 'none';
